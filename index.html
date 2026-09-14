@@ -54,6 +54,7 @@ const TABLERO_ID = "principal";
     --s-listo:#00C875; --s-trabajando:#FDAB3D; --s-detenido:#E2445C; --s-nuevo:#C4C4C4; --s-revision:#579BFC;
     --p-alta:#401694; --p-media:#5559DF; --p-baja:#579BFC; --p-critica:#333333;
     --g1:#579BFC; --g2:#A25DDC; --g3:#00C875; --g4:#FDAB3D; --g5:#E2445C; --g6:#037F4C;
+    --radius:18px; --fontsize:14px; --sidew:230px;
   }
   :root{--brand2:#00C875;--hero:linear-gradient(120deg,#6161FF,#00C875 60%,#FDAB3D)}
   [data-theme="oceano"]{--bg:#E8F3F8;--side:#DCEBF3;--white:#fff;--ink:#0F2B3C;--ink-2:#4F6B7A;--line:#C6DAE5;--hover:#EEF6FA;--brand:#0077B6;--brand2:#00B4D8;--hero:linear-gradient(120deg,#023E8A,#0096C7 55%,#48CAE4)}
@@ -74,7 +75,7 @@ const TABLERO_ID = "principal";
   [data-theme="noche"] .date-cell.soon{color:#8FC1FF}
 
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Figtree',system-ui,sans-serif;font-size:14px;display:flex;min-height:100vh;transition:background .3s,color .3s}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Figtree',system-ui,sans-serif;font-size:var(--fontsize);display:flex;min-height:100vh;transition:background .3s,color .3s}
   .themes{display:flex;gap:8px;flex-wrap:wrap;padding:6px 10px}
   .swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;padding:0;transition:transform .15s,border-color .15s}
   .swatch:hover{transform:scale(1.15)}
@@ -98,7 +99,18 @@ const TABLERO_ID = "principal";
   button{cursor:pointer;border:none;background:none}
   :focus-visible{outline:2px solid var(--brand);outline-offset:1px}
 
-  aside{width:230px;background:var(--side);padding:18px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:6px}
+  aside{width:var(--sidew);background:var(--side);padding:18px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:6px}
+  aside.design-aside{width:270px;flex-shrink:0;border-left:1px solid var(--line);overflow-y:auto;gap:14px;margin:14px 14px 14px 12px!important}
+  aside.design-aside[hidden]{display:none}
+  aside.design-aside h3{margin:0;font-size:15px;font-weight:800;display:flex;align-items:center;gap:6px}
+  aside.design-aside .dclose{margin-left:auto;font-size:15px;color:var(--ink-2);padding:2px 8px;border-radius:4px}
+  aside.design-aside .dclose:hover{background:var(--hover);color:var(--ink)}
+  .dgroup{display:flex;flex-direction:column;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .dgroup:last-of-type{border-bottom:none;padding-bottom:0}
+  .dlabel{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--ink-2);font-weight:600}
+  .dlabel .val{color:var(--ink);font-weight:700;margin-left:4px}
+  .dlabel input[type=color]{width:100%;height:34px;border:1px solid var(--line);border-radius:6px;padding:2px;background:var(--white);cursor:pointer}
+  .dlabel input[type=range]{width:100%;accent-color:var(--brand)}
   aside .brand{font-weight:800;font-size:18px;padding:4px 10px 14px;display:flex;gap:8px;align-items:center}
   aside .item{padding:8px 10px;border-radius:6px;font-weight:600;color:var(--ink-2);display:flex;justify-content:space-between;align-items:center}
   aside .item.active{background:#DCDFEC;color:var(--ink)}
@@ -109,7 +121,7 @@ const TABLERO_ID = "principal";
   aside .sep{border-top:1px solid var(--line);margin:8px 0}
   aside .small{font-size:12px;color:var(--ink-2);padding:0 10px}
 
-  main{flex:1;min-width:0;padding:22px 28px 60px;background:var(--white);margin:12px 12px 12px 0;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  main{flex:1;min-width:0;padding:22px 28px 60px;background:var(--white);margin:12px 12px 12px 0;border-radius:var(--radius);box-shadow:0 1px 3px rgba(0,0,0,.05)}
   .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
   h1{font-size:24px;font-weight:700;margin:0}
   h1 small{display:block;font-size:13px;font-weight:500;color:var(--ink-2);text-transform:capitalize;margin-top:2px}
@@ -326,7 +338,7 @@ const TABLERO_ID = "principal";
   [data-theme="noche"] .logbtn{background:#2B3050;border-color:#3A4064} [data-theme="noche"] .logbtn.has{background:#33396a;color:#B7B3FF}
 
   :root{--line:#E3E6EE;--hover:#F7F8FB}
-  main{background:rgba(255,255,255,.92);margin:14px 14px 14px 0;border-radius:18px;box-shadow:0 10px 40px rgba(24,38,58,.08);border:1px solid rgba(255,255,255,.7);backdrop-filter:blur(10px)}
+  main{background:rgba(255,255,255,.92);margin:14px 14px 14px 0;border-radius:var(--radius);box-shadow:0 10px 40px rgba(24,38,58,.08);border:1px solid rgba(255,255,255,.7);backdrop-filter:blur(10px)}
   aside{background:rgba(255,255,255,.55);backdrop-filter:blur(10px);border-right:none;margin:14px 0 14px 14px;border-radius:18px;height:calc(100vh - 28px);position:sticky;top:14px}
   h1{font-size:26px;letter-spacing:-.4px}
   .btn{border-radius:10px;padding:8px 16px;background:#fff;border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.04)}
@@ -399,7 +411,7 @@ const TABLERO_ID = "principal";
   .toolbar{margin-bottom:10px}
   /* Cabecera fija: título, pestañas y filtros quedan visibles al desplazarse */
   main{padding-top:0}
-  .sticky-top{position:sticky;top:0;z-index:15;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);padding-top:22px;margin:0 -28px 12px;padding-left:28px;padding-right:28px;border-radius:18px 18px 0 0}
+  .sticky-top{position:sticky;top:0;z-index:15;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);padding-top:22px;margin:0 -28px 12px;padding-left:28px;padding-right:28px;border-radius:var(--radius) var(--radius) 0 0}
   [data-theme="noche"] .sticky-top{background:rgba(35,40,70,.96)}
   .group{margin-bottom:16px}
   .tbl td{height:38px}
@@ -507,6 +519,7 @@ const TABLERO_ID = "principal";
   <div class="top">
     <h1>Panel de Operaciones<small id="today"></small></h1>
     <div class="actions">
+      <button class="btn" id="btnDesign">🎨 Diseño</button>
       <button class="btn" id="btnNotif">Activar avisos</button>
       <button class="btn" id="btnExport">⬇ Excel</button><button class="btn" id="btnExportPPT">⬇ PowerPoint</button>
       <button class="btn primary" id="btnNew">+ Nueva demanda</button>
@@ -553,6 +566,38 @@ const TABLERO_ID = "principal";
 
   <div id="groups"></div>
 </main>
+
+<aside class="design-aside" id="designAside" hidden>
+  <h3>🎨 Personalizar diseño <button class="dclose" id="dClose" title="Cerrar">✕</button></h3>
+  <div class="dgroup">
+    <label class="dlabel">Color principal
+      <input type="color" id="dBrand" value="#6161FF">
+    </label>
+    <label class="dlabel">Color secundario
+      <input type="color" id="dBrand2" value="#00C875">
+    </label>
+  </div>
+  <div class="dgroup">
+    <label class="dlabel">Fondo de la página
+      <input type="color" id="dBg" value="#F6F7FB">
+    </label>
+    <label class="dlabel">Fondo del menú lateral
+      <input type="color" id="dSide" value="#EEF1FA">
+    </label>
+  </div>
+  <div class="dgroup">
+    <label class="dlabel">Redondez del panel principal <span class="val" id="dRadiusVal">18px</span>
+      <input type="range" id="dRadius" min="0" max="30" value="18">
+    </label>
+    <label class="dlabel">Tamaño de letra <span class="val" id="dFontVal">14px</span>
+      <input type="range" id="dFont" min="12" max="18" value="14">
+    </label>
+    <label class="dlabel">Ancho del menú lateral <span class="val" id="dSideWVal">230px</span>
+      <input type="range" id="dSideW" min="180" max="320" value="230">
+    </label>
+  </div>
+  <button class="btn" id="dReset">↺ Restablecer valores</button>
+</aside>
 
 <div class="toast" id="toast"></div>
 
@@ -1218,6 +1263,92 @@ const TABLERO_ID = "principal";
   function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2000);}
 
   load(); setInterval(()=>{ if(!$('login').hidden) return; if(pop||!$('formPanel').hidden) return; render(); checkNotif(); },60000);
+})();
+</script>
+
+<script>
+/* ============================================================
+   PANEL DE PERSONALIZACIÓN DE DISEÑO (independiente del resto)
+   Ajusta variables CSS en vivo y las guarda en localStorage.
+   ============================================================ */
+(function(){
+  const root=document.documentElement;
+  const STORE_KEY='panel-design-custom-v1';
+  const VARS={brand:'--brand',brand2:'--brand2',bg:'--bg',side:'--side',radius:'--radius',fontsize:'--fontsize',sidew:'--sidew'};
+  const PX_KEYS=['radius','fontsize','sidew'];
+
+  function loadSaved(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'{}'); }catch(e){ return {}; } }
+  function save(vals){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(vals)); }catch(e){} }
+  function applyAll(vals){
+    Object.keys(vals).forEach(k=>{
+      if(!VARS[k] || vals[k]==null || vals[k]==='') return;
+      root.style.setProperty(VARS[k], PX_KEYS.includes(k) ? vals[k]+'px' : vals[k]);
+    });
+  }
+
+  let current=loadSaved();
+  applyAll(current);
+
+  document.addEventListener('DOMContentLoaded', function(){
+    const panel=document.getElementById('designAside');
+    const btnOpen=document.getElementById('btnDesign');
+    const btnClose=document.getElementById('dClose');
+    if(btnOpen&&panel) btnOpen.addEventListener('click', ()=>{ panel.hidden=!panel.hidden; if(!panel.hidden) syncControls(); });
+    if(btnClose&&panel) btnClose.addEventListener('click', ()=>{ panel.hidden=true; });
+
+    const inputs={
+      brand:document.getElementById('dBrand'), brand2:document.getElementById('dBrand2'),
+      bg:document.getElementById('dBg'), side:document.getElementById('dSide'),
+      radius:document.getElementById('dRadius'), fontsize:document.getElementById('dFont'), sidew:document.getElementById('dSideW')
+    };
+    const labels={ radius:document.getElementById('dRadiusVal'), fontsize:document.getElementById('dFontVal'), sidew:document.getElementById('dSideWVal') };
+
+    function cssVar(name){ return getComputedStyle(root).getPropertyValue(name).trim(); }
+    function hexOrNull(v){ return v && v[0]==='#' ? v : null; }
+
+    function syncControls(){
+      if(inputs.brand) inputs.brand.value = current.brand || hexOrNull(cssVar('--brand')) || '#6161FF';
+      if(inputs.brand2) inputs.brand2.value = current.brand2 || hexOrNull(cssVar('--brand2')) || '#00C875';
+      if(inputs.bg) inputs.bg.value = current.bg || hexOrNull(cssVar('--bg')) || '#F6F7FB';
+      if(inputs.side) inputs.side.value = current.side || hexOrNull(cssVar('--side')) || '#EEF1FA';
+      const r=current.radius!=null?current.radius:(parseInt(cssVar('--radius'))||18);
+      const f=current.fontsize!=null?current.fontsize:(parseInt(cssVar('--fontsize'))||14);
+      const w=current.sidew!=null?current.sidew:(parseInt(cssVar('--sidew'))||230);
+      if(inputs.radius){ inputs.radius.value=r; labels.radius.textContent=r+'px'; }
+      if(inputs.fontsize){ inputs.fontsize.value=f; labels.fontsize.textContent=f+'px'; }
+      if(inputs.sidew){ inputs.sidew.value=w; labels.sidew.textContent=w+'px'; }
+    }
+
+    ['brand','brand2','bg','side'].forEach(key=>{
+      const el=inputs[key];
+      if(!el) return;
+      el.addEventListener('input', ()=>{ current[key]=el.value; applyAll(current); save(current); });
+    });
+
+    ['radius','fontsize','sidew'].forEach(key=>{
+      const el=inputs[key], lab=labels[key];
+      if(!el) return;
+      el.addEventListener('input', ()=>{ current[key]=el.value; if(lab) lab.textContent=el.value+'px'; applyAll(current); save(current); });
+    });
+
+    const btnReset=document.getElementById('dReset');
+    if(btnReset) btnReset.addEventListener('click', ()=>{
+      current={};
+      try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+      Object.values(VARS).forEach(v=>root.style.removeProperty(v));
+      syncControls();
+    });
+
+    // Si se elige un tema preestablecido (swatch), limpiamos los overrides
+    // de color para que el tema se vea completo (mantenemos tipografía/anchos).
+    document.querySelectorAll('.swatch').forEach(s=>s.addEventListener('click', ()=>{
+      ['brand','brand2','bg','side'].forEach(k=>{ delete current[k]; root.style.removeProperty(VARS[k]); });
+      save(current);
+      setTimeout(syncControls,0);
+    }));
+
+    syncControls();
+  });
 })();
 </script>
 </body>
