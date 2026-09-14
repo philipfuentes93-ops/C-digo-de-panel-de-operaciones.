@@ -1,0 +1,25 @@
+name: Resumen diario por email
+
+on:
+  schedule:
+    - cron: '0 12 * * *' # 8:00 AM hora de Chile (UTC-4)
+  workflow_dispatch: {}
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Instalar dependencias
+        working-directory: scripts
+        run: npm install
+      - name: Enviar resumen
+        working-directory: scripts
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          DIGEST_TO_EMAIL: philip.fuentes93@gmail.com
+        run: node daily-digest.mjs
