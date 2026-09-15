@@ -152,9 +152,10 @@ const TABLERO_ID = "principal";
   .sync{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);padding:6px 10px}
   .sync i{width:8px;height:8px;border-radius:50%;background:var(--s-nuevo)}
   .sync.ok i{background:var(--s-listo)} .sync.saving i{background:var(--s-trabajando)} .sync.err i{background:var(--s-detenido)}
-  .me{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:13px;flex-wrap:wrap}
-  .me span{min-width:0;overflow-wrap:break-word;flex:1}
-  .me button{color:var(--ink-2);font-size:12px;text-decoration:underline;flex-shrink:0;white-space:nowrap}
+  .me{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:6px 10px;font-size:13px;min-width:0}
+  .me-row{display:flex;align-items:center;gap:8px;min-width:0;max-width:100%}
+  .me-row span{min-width:0;overflow-wrap:break-word}
+  .me button{color:var(--ink-2);font-size:12px;text-decoration:underline;padding:0}
 
   .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px}
   .tab{border:1px solid var(--line);background:rgba(255,255,255,.75);border-radius:8px;padding:7px 14px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--ink-2);transition:transform .15s}
@@ -691,7 +692,7 @@ const TABLERO_ID = "principal";
     }
     $('login').hidden=true;
     const meName=email.split('@')[0].replace(/[._-]/g,' '); const mp=persona(meName)||PERSONAS.find(p=>norm(meName).includes(norm(p.name.split(' ')[0])));
-    $('me').innerHTML=`${avatarHtml(mp?mp.name:meName,'lg')}<span>${esc(mp?mp.name:email)}</span><button id="btnOut">salir</button>`;
+    $('me').innerHTML=`<div class="me-row">${avatarHtml(mp?mp.name:meName,'lg')}<span>${esc(mp?mp.name:email)}</span></div><button id="btnOut">Cerrar sesión</button>`;
     $('btnOut').addEventListener('click',()=>auth.signOut());
     unsub=docRef.onSnapshot(snap=>{
       if(snap.exists&&snap.data().json){ const remote=JSON.parse(snap.data().json);
