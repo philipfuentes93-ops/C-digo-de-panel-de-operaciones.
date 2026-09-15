@@ -301,6 +301,38 @@ const TABLERO_ID = "principal";
 
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
   .toast.show{opacity:1}
+
+  /* Alertas: campana + resumen instantáneo */
+  .bell-btn{position:relative;width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--line);font-size:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .bell-btn:hover{filter:brightness(.97)}
+  .bell-btn.urgent{animation:bellRing 1.8s ease-in-out infinite}
+  @keyframes bellRing{0%,88%,100%{transform:rotate(0)}90%{transform:rotate(-14deg)}92%{transform:rotate(11deg)}94%{transform:rotate(-8deg)}96%{transform:rotate(5deg)}}
+  .bell-badge{position:absolute;top:-3px;right:-3px;background:var(--s-detenido);color:#fff;font-size:10px;font-weight:800;min-width:17px;height:17px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 0 0 2px var(--white)}
+  .bell-badge[hidden]{display:none}
+  [data-theme="noche"] .bell-btn{background:var(--hover);border-color:var(--line)}
+
+  .bell-pop{width:320px;max-width:90vw;max-height:340px;overflow:auto;display:block;padding:10px}
+  .bell-pop h4{margin:0 0 8px;font-size:13.5px}
+  .bell-item{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:8px;background:var(--hover);margin-bottom:6px;border-left:3px solid var(--s-nuevo);cursor:pointer}
+  .bell-item:hover{filter:brightness(.97)}
+  .bell-item.overdue{border-left-color:var(--s-detenido)}
+  .bell-item.today{border-left-color:var(--s-trabajando)}
+  .bell-item b{font-size:12.5px}
+  .bell-item span{font-size:11px;color:var(--ink-2)}
+  .bell-empty{color:var(--ink-2);font-size:12.5px;padding:14px 4px;text-align:center}
+
+  .briefing-overlay{position:fixed;inset:0;background:rgba(20,22,35,.5);display:flex;align-items:center;justify-content:center;z-index:55;padding:20px}
+  .briefing-card{background:var(--white);border-radius:16px;padding:26px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.3);border-top:6px solid var(--brand);animation:panelIn .2s ease-out}
+  .briefing-card h3{margin:0 0 2px;font-size:19px}
+  .briefing-card .sub{color:var(--ink-2);font-size:12.5px;margin-bottom:16px;text-transform:capitalize}
+  .briefing-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .briefing-row:last-of-type{border-bottom:none}
+  .briefing-row .n{font-size:24px;font-weight:800;width:40px;text-align:center;flex-shrink:0}
+  .briefing-row .lbl{flex:1;min-width:0}
+  .briefing-row .lbl b{display:block;font-size:13.5px}
+  .briefing-row .lbl small{color:var(--ink-2);font-size:11.5px}
+  .briefing-close{margin-top:18px;width:100%}
+  .briefing-ok{text-align:center;color:var(--ink-2);font-size:13.5px;padding:10px 0}
   @media (max-width:900px){ aside{display:none} main{margin:0;border-radius:0;padding:14px} }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
@@ -507,7 +539,8 @@ const TABLERO_ID = "principal";
   <div class="top">
     <h1>Panel de Operaciones<small id="today"></small></h1>
     <div class="actions">
-      <button class="btn" id="btnNotif">Activar avisos</button>
+      <button class="bell-btn" id="btnBell" title="Alertas"><span>🔔</span><span class="bell-badge" id="bellBadge" hidden>0</span></button>
+      <button class="btn" id="btnBriefing">⚡ Resumen</button>
       <button class="btn" id="btnExport">⬇ Excel</button><button class="btn" id="btnExportPPT">⬇ PowerPoint</button>
       <button class="btn primary" id="btnNew">+ Nueva demanda</button>
     </div>
@@ -723,6 +756,7 @@ const TABLERO_ID = "principal";
     document.querySelectorAll('.chip').forEach(ch=>{ch.querySelector('b').textContent=c[ch.dataset.f]; ch.classList.toggle('on',filter===ch.dataset.f); ch.classList.toggle('has',c[ch.dataset.f]>0);});
     const so=$('sideOverdue').querySelector('.badge'); so.textContent=c.overdue; so.classList.toggle('zero',!c.overdue);
     const st=$('sideToday').querySelector('.badge'); st.textContent=c.today; st.classList.toggle('zero',!c.today);
+    updateBell();
     refreshFilters();
     const FIDS=['search','filtClient','filtPerson','filtDept','filtStatus'];
     FIDS.forEach(id=>$(id).classList.toggle('active',!!$(id).value));
@@ -1002,14 +1036,41 @@ const TABLERO_ID = "principal";
   $('fTitle').addEventListener('keydown',e=>{ if(e.key==='Enter') saveForm(); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const l=document.querySelector('.lightbox'); if(l){ l.remove(); return; } if(!$('formPanel').hidden) closeForm(); } });
 
-  // Avisos
-  const notified=new Set();
-  function checkNotif(){
-    if(!('Notification' in window)||Notification.permission!=='granted')return;
-    allTasks().forEach(t=>{const i=dueInfo(t); const k=t.id+'-'+i.cls; if((i.cls==='overdue'||i.cls==='today')&&!notified.has(k)){notified.add(k); new Notification(i.cls==='overdue'?'Demanda vencida':'Vence hoy',{body:t.title+(t.client?' — '+t.client:'')});}});
+  // Alertas: campana con contador + resumen instantáneo
+  function urgentTasks(){
+    return allTasks().map(t=>({t,info:dueInfo(t)})).filter(x=>x.info.cls==='overdue'||x.info.cls==='today').sort((a,b)=>(a.t.date||'').localeCompare(b.t.date||''));
   }
-  $('btnNotif').addEventListener('click',async()=>{ if(!('Notification' in window)){toast('Este navegador no admite avisos');return;} const p=await Notification.requestPermission(); if(p==='granted'){toast('Avisos activados');$('btnNotif').textContent='Avisos activos';checkNotif();} else toast('Avisos no permitidos'); });
-  if('Notification' in window&&Notification.permission==='granted') $('btnNotif').textContent='Avisos activos';
+  function updateBell(){
+    const n=urgentTasks().length; const badge=$('bellBadge'); const bell=$('btnBell');
+    badge.textContent=n; badge.hidden=!n; bell.classList.toggle('urgent',n>0);
+  }
+  $('btnBell').addEventListener('click',()=>{
+    if(pop){closePop();return;}
+    const items=urgentTasks();
+    const p=document.createElement('div'); p.className='pop bell-pop';
+    p.innerHTML=`<h4>Alertas (${items.length})</h4>`+(items.length?items.map(({t,info})=>`<div class="bell-item ${info.cls}" data-id="${t.id}"><b>${esc(t.title)}</b><span>${esc(t.person||'Sin asignar')} · ${info.cls==='overdue'?info.label:'Vence hoy'}</span></div>`).join(''):'<div class="bell-empty">Sin demandas vencidas ni que venzan hoy ✅</div>');
+    p.querySelectorAll('.bell-item').forEach(el=>el.addEventListener('click',()=>{ closePop(); const t=allTasks().find(x=>x.id===el.dataset.id); if(t){ filter=''; area='todas'; render(); const row=document.querySelector(`tr[data-id="${t.id}"]`); if(row) row.scrollIntoView({block:'center',behavior:'smooth'}); } }));
+    place(p,$('btnBell')); pop=p;
+  });
+  $('btnBriefing').addEventListener('click',()=>{
+    const c={overdue:0,today:0,soon:0}; allTasks().forEach(t=>{const i=dueInfo(t); if(c[i.cls]!==undefined)c[i.cls]++;});
+    const total=c.overdue+c.today+c.soon;
+    const fecha=new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+    const ov=document.createElement('div'); ov.className='briefing-overlay';
+    ov.innerHTML=`<div class="briefing-card">
+      <h3>⚡ Resumen del día</h3>
+      <div class="sub">${esc(fecha)}</div>
+      ${total?`
+        <div class="briefing-row"><span class="n" style="color:var(--s-detenido)">${c.overdue}</span><span class="lbl"><b>Vencidas</b><small>Requieren atención inmediata</small></span></div>
+        <div class="briefing-row"><span class="n" style="color:var(--s-trabajando)">${c.today}</span><span class="lbl"><b>Vencen hoy</b><small>Cerrar antes de fin del día</small></span></div>
+        <div class="briefing-row"><span class="n" style="color:#2A63B5">${c.soon}</span><span class="lbl"><b>Próximos 3 días</b><small>Para planificar</small></span></div>
+      `:'<div class="briefing-ok">Todo al día, no hay demandas urgentes ✅</div>'}
+      <button class="btn primary briefing-close">Cerrar</button>
+    </div>`;
+    ov.querySelector('.briefing-close').addEventListener('click',()=>ov.remove());
+    ov.addEventListener('click',e=>{ if(e.target===ov) ov.remove(); });
+    document.body.appendChild(ov);
+  });
 
   // Exportar (mismas columnas que el Gantt)
   $('btnExport').addEventListener('click',()=>{ if(typeof XLSX!=='undefined'){buildXLSX();}else{toast('Cargando librería, intenta en 3 segundos…');const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=buildXLSX;document.head.appendChild(s);} });
@@ -1217,7 +1278,7 @@ const TABLERO_ID = "principal";
   function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
   function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2000);}
 
-  load(); setInterval(()=>{ if(!$('login').hidden) return; if(pop||!$('formPanel').hidden) return; render(); checkNotif(); },60000);
+  load(); setInterval(()=>{ if(!$('login').hidden) return; if(pop||!$('formPanel').hidden) return; render(); },60000);
 })();
 </script>
 </body>
