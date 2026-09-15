@@ -152,8 +152,9 @@ const TABLERO_ID = "principal";
   .sync{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);padding:6px 10px}
   .sync i{width:8px;height:8px;border-radius:50%;background:var(--s-nuevo)}
   .sync.ok i{background:var(--s-listo)} .sync.saving i{background:var(--s-trabajando)} .sync.err i{background:var(--s-detenido)}
-  .me{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:13px}
-  .me button{color:var(--ink-2);font-size:12px;text-decoration:underline}
+  .me{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:13px;flex-wrap:wrap}
+  .me span{min-width:0;overflow-wrap:break-word;flex:1}
+  .me button{color:var(--ink-2);font-size:12px;text-decoration:underline;flex-shrink:0;white-space:nowrap}
 
   .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px}
   .tab{border:1px solid var(--line);background:rgba(255,255,255,.75);border-radius:8px;padding:7px 14px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--ink-2);transition:transform .15s}
