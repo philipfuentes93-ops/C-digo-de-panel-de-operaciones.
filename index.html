@@ -514,8 +514,16 @@ const TABLERO_ID = "principal";
   .desc-box .err{color:var(--s-detenido);font-size:12.5px;min-height:16px}
   .desc-box .avatar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 
+  .tree-caret{width:12px;height:12px;stroke:var(--ink-2);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;transition:transform .15s}
+  .tree-parent.open .tree-caret{transform:rotate(90deg)}
+  .tree-children{max-height:0;overflow:hidden;transition:max-height .15s ease}
+  .tree-children.open{max-height:160px}
+  .tree-child{padding-left:26px}
+  .tree-child .ic{width:22px;height:22px}
+  .tree-child .ic svg{width:12px;height:12px}
+
   aside.collapsed{width:70px}
-  aside.collapsed .brand-label,aside.collapsed .label,aside.collapsed .badge,aside.collapsed .small,aside.collapsed .me-row,aside.collapsed .me button,aside.collapsed .sync span{display:none}
+  aside.collapsed .brand-label,aside.collapsed .label,aside.collapsed .badge,aside.collapsed .small,aside.collapsed .me-row,aside.collapsed .me button,aside.collapsed .sync span,aside.collapsed .tree-caret,aside.collapsed .tree-children{display:none}
   aside.collapsed .collapse-btn svg{transform:rotate(180deg)}
   aside.collapsed .item{justify-content:center}
   aside.collapsed .brand{justify-content:center}
@@ -547,10 +555,16 @@ const TABLERO_ID = "principal";
   <div class="item active"><span class="ic" style="background:#6161FF"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg></span><span class="label">Demandas de clientes</span></div>
   <div class="sync" id="sync"><i></i><span>Conectando…</span></div>
   <div class="sep"></div>
-  <div class="small" style="padding-bottom:2px">Configuración de cuenta</div>
-  <div class="item" id="navPerfil"><span class="ic" style="background:#579BFC"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/></svg></span><span class="label">Perfil básico</span></div>
-  <div class="item" id="navPass"><span class="ic" style="background:#A25DDC"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><span class="label">Cambiar contraseña</span></div>
-  <div class="item" id="navNotif"><span class="ic" style="background:#FDAB3D"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg></span><span class="label">Preferencias de notificación</span></div>
+  <div class="item tree-parent" id="navConfig">
+    <span class="ic" style="background:#676879"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+    <span class="label">Configuración de cuenta</span>
+    <svg class="tree-caret" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+  </div>
+  <div class="tree-children" id="configChildren">
+    <div class="item tree-child" id="navPerfil"><span class="ic" style="background:#579BFC"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/></svg></span><span class="label">Perfil básico</span></div>
+    <div class="item tree-child" id="navPass"><span class="ic" style="background:#A25DDC"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><span class="label">Cambiar contraseña</span></div>
+    <div class="item tree-child" id="navNotif"><span class="ic" style="background:#FDAB3D"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg></span><span class="label">Preferencias de notificación</span></div>
+  </div>
   <div class="sep"></div>
   <div class="me" id="me"></div>
   <div class="sep"></div>
@@ -1168,6 +1182,13 @@ const TABLERO_ID = "principal";
     const CKEY=KEY+'-collapsed'; let collapsed=false; try{ collapsed=localStorage.getItem(CKEY)==='1'; }catch(e){}
     const aside=$('mainAside'); aside.classList.toggle('collapsed',collapsed);
     $('btnCollapse').addEventListener('click',()=>{ collapsed=!collapsed; aside.classList.toggle('collapsed',collapsed); try{ localStorage.setItem(CKEY,collapsed?'1':'0'); }catch(e){} });
+  })();
+  (function(){
+    const CFGKEY=KEY+'-cfgopen'; let cfgOpen=false; try{ cfgOpen=localStorage.getItem(CFGKEY)==='1'; }catch(e){}
+    const parent=$('navConfig'), children=$('configChildren');
+    const apply=()=>{ parent.classList.toggle('open',cfgOpen); children.classList.toggle('open',cfgOpen); };
+    apply();
+    parent.addEventListener('click',()=>{ cfgOpen=!cfgOpen; apply(); try{ localStorage.setItem(CFGKEY,cfgOpen?'1':'0'); }catch(e){} });
   })();
 
   // Panel de demanda
