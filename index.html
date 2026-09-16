@@ -499,6 +499,34 @@ const TABLERO_ID = "principal";
   .area-tag{display:none!important}
   .edit{display:none}
   .row:hover .edit{display:inline}
+
+  /* Sidebar: íconos de color, colapsar, progreso general */
+  aside .item{gap:10px}
+  aside .item .ic{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  aside .item .ic svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+  aside .item .label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  aside .item .badge.soft.urgent{background:var(--s-detenido);color:#fff}
+  .collapse-btn{width:24px;height:24px;border-radius:7px;background:var(--hover);color:var(--ink-2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .collapse-btn:hover{background:var(--line)}
+  .collapse-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+  .progress-wrap{padding:2px 10px 0}
+  .progress-top{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-2);margin-bottom:5px}
+  .progress-top b{color:var(--ink);font-size:12.5px}
+  .progress-bar-mini{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+  .progress-bar-mini i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:width .3s}
+  .recent-pop{width:280px;max-width:90vw;max-height:320px;overflow:auto;padding:8px}
+  .recent-pop h4{margin:0 0 6px;font-size:13px}
+  .recent-item{display:block;width:100%;text-align:left;padding:7px 8px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
+  .recent-item:hover{background:var(--hover)}
+  .recent-item small{display:block;font-weight:500;color:var(--ink-2);font-size:11px}
+  .recent-empty{color:var(--ink-2);font-size:12.5px;padding:8px 4px;text-align:center}
+
+  aside.collapsed{width:70px}
+  aside.collapsed .brand-label,aside.collapsed .label,aside.collapsed .badge,aside.collapsed .small,aside.collapsed .progress-wrap,aside.collapsed .me-row,aside.collapsed .me button,aside.collapsed .sync span{display:none}
+  aside.collapsed .collapse-btn svg{transform:rotate(180deg)}
+  aside.collapsed .item{justify-content:center}
+  aside.collapsed .brand{justify-content:center}
+  aside.collapsed .me{justify-content:center}
 </style>
 </head>
 <body>
@@ -518,17 +546,23 @@ const TABLERO_ID = "principal";
     <div class="err" id="loginErr"></div>
   </div>
 </div>
-<aside>
-  <div class="brand"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNjE2MUZGIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjM0IzQkQ5Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9InVybCgjZykiLz48cmVjdCB4PSIxMiIgeT0iMTYiIHdpZHRoPSIxMiIgaGVpZ2h0PSIzMiIgcng9IjMiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii45NSIvPjxyZWN0IHg9IjI2IiB5PSIxNiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjIyIiByeD0iMyIgZmlsbD0iI0ZEQUIzRCIvPjxyZWN0IHg9IjQwIiB5PSIxNiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjE0IiByeD0iMyIgZmlsbD0iIzAwQzg3NSIvPjxjaXJjbGUgY3g9IjQ2IiBjeT0iNDIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNNDIuNSA0Mi4ybDIuNCAyLjQgNC42LTQuOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBDODc1IiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+" alt="" style="width:26px;height:26px;border-radius:7px">Panel de Operaciones</div>
-  <div class="item active"><span>Demandas de clientes</span></div>
+<aside id="mainAside">
+  <div class="brand" style="justify-content:space-between">
+    <span style="display:flex;gap:8px;align-items:center;min-width:0"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNjE2MUZGIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjM0IzQkQ5Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9InVybCgjZykiLz48cmVjdCB4PSIxMiIgeT0iMTYiIHdpZHRoPSIxMiIgaGVpZ2h0PSIzMiIgcng9IjMiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii45NSIvPjxyZWN0IHg9IjI2IiB5PSIxNiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjIyIiByeD0iMyIgZmlsbD0iI0ZEQUIzRCIvPjxyZWN0IHg9IjQwIiB5PSIxNiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjE0IiByeD0iMyIgZmlsbD0iIzAwQzg3NSIvPjxjaXJjbGUgY3g9IjQ2IiBjeT0iNDIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNNDIuNSA0Mi4ybDIuNCAyLjQgNC42LTQuOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBDODc1IiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+" alt="" style="width:26px;height:26px;border-radius:7px;flex-shrink:0"><span class="brand-label">Panel de Operaciones</span></span>
+    <button class="collapse-btn" id="btnCollapse" title="Colapsar menú"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+  </div>
+  <div class="item active"><span class="ic" style="background:#6161FF"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg></span><span class="label">Demandas de clientes</span></div>
+  <div class="item" id="navMine"><span class="ic" style="background:#579BFC"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/></svg></span><span class="label">Mis demandas</span><span class="badge soft zero" id="mineBadge">0</span></div>
+  <div class="item" id="navRecent"><span class="ic" style="background:#FDAB3D"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6M12 2v3"/></svg></span><span class="label">Recientes</span></div>
   <div class="sync" id="sync"><i></i><span>Conectando…</span></div>
+  <div class="sep"></div>
+  <div class="small" style="padding-bottom:2px">Progreso general</div>
+  <div class="progress-wrap">
+    <div class="progress-top"><span>Finalizadas</span><b id="pgLabel">0 / 0</b></div>
+    <div class="progress-bar-mini"><i id="pgBar" style="width:0%"></i></div>
+  </div>
+  <div class="sep"></div>
   <div class="me" id="me"></div>
-  <div class="sep"></div>
-  <div class="small" style="padding-bottom:2px">Áreas</div>
-  <div id="sideAreas"></div>
-  <div class="sep"></div>
-  <div class="item" id="sideOverdue"><span>Vencidas</span><span class="badge">0</span></div>
-  <div class="item" id="sideToday"><span>Vencen hoy</span><span class="badge warn">0</span></div>
   <div class="sep"></div>
   <div class="small" style="padding-bottom:2px">Tema de color</div>
   <div class="themes" id="themes">
@@ -619,6 +653,9 @@ const TABLERO_ID = "principal";
   const GCOLORS=['var(--g1)','var(--g2)','var(--g3)','var(--g4)','var(--g5)','var(--g6)'];
   const $=id=>document.getElementById(id);
   let data={groups:[]}; let filter=''; const DKEY=KEY+'-showdone'; let showDone=false; try{ showDone=localStorage.getItem(DKEY)==='1'; }catch(e){}
+  let myPersonaName='';
+  const RKEY=KEY+'-recent'; let recentTouched=[]; try{ recentTouched=JSON.parse(localStorage.getItem(RKEY)||'[]'); }catch(e){}
+  function touchRecent(id){ recentTouched=[id,...recentTouched.filter(x=>x!==id)].slice(0,6); try{ localStorage.setItem(RKEY,JSON.stringify(recentTouched)); }catch(e){} }
   const recent=new Set(); /* demandas recién finalizadas en esta sesión: se siguen mostrando aunque estén ocultas las finalizadas */
   const AKEY=KEY+'-area'; let area='todas'; try{ area=localStorage.getItem(AKEY)||'todas'; }catch(e){}
   const areaById=id=>AREAS.find(a=>a.id===id);
@@ -697,6 +734,7 @@ const TABLERO_ID = "principal";
     }
     $('login').hidden=true;
     const meName=email.split('@')[0].replace(/[._-]/g,' '); const mp=persona(meName)||PERSONAS.find(p=>norm(meName).includes(norm(p.name.split(' ')[0])));
+    myPersonaName=mp?mp.name:meName;
     $('me').innerHTML=`<div class="me-row">${avatarHtml(mp?mp.name:meName,'lg')}<span>${esc(mp?mp.name:email)}</span></div><button id="btnOut">Cerrar sesión</button>`;
     $('btnOut').addEventListener('click',()=>auth.signOut());
     unsub=docRef.onSnapshot(snap=>{
@@ -761,9 +799,12 @@ const TABLERO_ID = "principal";
     const c={overdue:0,today:0,soon:0,open:0,done:0};
     allTasks().filter(t=>area==='todas'||(data.groups.find(g=>g.tasks.includes(t))||{}).area===area).forEach(t=>{const i=dueInfo(t); if(c[i.cls]!==undefined)c[i.cls]++; if(t.status===DONE) c.done++; else c.open++;});
     document.querySelectorAll('.chip').forEach(ch=>{ch.querySelector('b').textContent=c[ch.dataset.f]; ch.classList.toggle('on',filter===ch.dataset.f); ch.classList.toggle('has',c[ch.dataset.f]>0);});
-    const so=$('sideOverdue').querySelector('.badge'); so.textContent=c.overdue; so.classList.toggle('zero',!c.overdue);
-    const st=$('sideToday').querySelector('.badge'); st.textContent=c.today; st.classList.toggle('zero',!c.today);
     updateBell();
+    const gc={done:0,open:0}; allTasks().forEach(t=>{ if(t.status===DONE) gc.done++; else gc.open++; });
+    const gTotal=gc.done+gc.open; $('pgLabel').textContent=gc.done+' / '+gTotal; $('pgBar').style.width=(gTotal?Math.round(gc.done/gTotal*100):0)+'%';
+    const mine=myPersonaName?allTasks().filter(t=>t.status!==DONE&&norm(t.person)===norm(myPersonaName)):[];
+    const mineUrgent=mine.some(t=>['overdue','today'].includes(dueInfo(t).cls));
+    const mineBadge=$('mineBadge'); mineBadge.textContent=mine.length; mineBadge.classList.toggle('zero',!mine.length); mineBadge.classList.toggle('urgent',mineUrgent);
     refreshFilters();
     const FIDS=['search','filtClient','filtPerson','filtDept','filtStatus'];
     FIDS.forEach(id=>$(id).classList.toggle('active',!!$(id).value));
@@ -771,13 +812,11 @@ const TABLERO_ID = "principal";
 
     const q=$('search').value.trim().toLowerCase(), fc=$('filtClient').value, fp=$('filtPerson').value, fd=$('filtDept').value, fs=$('filtStatus').value;
     $('showDone').checked=showDone;
-    const matchF=t=>{ if(filter==='done') return t.status===DONE; if(t.status===DONE&&!showDone&&!fs&&!recent.has(t.id)) return false; if(!filter) return true; if(filter==='open') return t.status!==DONE; return dueInfo(t).cls===filter; };
+    const matchF=t=>{ if(filter==='mine') return t.status!==DONE&&norm(t.person)===norm(myPersonaName); if(filter==='done') return t.status===DONE; if(t.status===DONE&&!showDone&&!fs&&!recent.has(t.id)) return false; if(!filter) return true; if(filter==='open') return t.status!==DONE; return dueInfo(t).cls===filter; };
     const tabs=$('tabs'); const pend=a=>data.groups.filter(g=>g.area===a.id).flatMap(g=>g.tasks).filter(t=>t.status!==DONE).length;
     tabs.innerHTML=`<button class="tab ${area==='todas'?'on':''}" data-a="todas"><i></i>Todas <span class="n">${allTasks().filter(t=>t.status!==DONE).length}</span></button>`+
       AREAS.map(a=>`<button class="tab ${area===a.id?'on':''}" data-a="${a.id}" style="--ac:${a.color}">${avatarHtml(a.owner)}${esc(a.name)} <small>${esc(a.owner)}</small><span class="n">${pend(a)}</span></button>`).join('');
     tabs.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setArea(b.dataset.a)));
-    $('sideAreas').innerHTML=AREAS.map(a=>`<div class="item ${area===a.id?'active':''}" data-a="${a.id}"><span style="display:flex;align-items:center;gap:6px">${avatarHtml(a.owner)}${esc(a.name)}</span><span class="badge soft">${pend(a)}</span></div>`).join('');
-    $('sideAreas').querySelectorAll('.item').forEach(b=>b.addEventListener('click',()=>setArea(b.dataset.a)));
 
     const wrap=$('groups'); wrap.innerHTML='';
     const renderGroup=(g,virtual)=>{
@@ -996,14 +1035,27 @@ const TABLERO_ID = "principal";
   $('showDone').addEventListener('change',e=>{ showDone=e.target.checked; try{ localStorage.setItem(DKEY,showDone?'1':'0'); }catch(x){} render(); });
   $('btnClear').addEventListener('click',()=>{ ['search','filtClient','filtPerson','filtDept','filtStatus'].forEach(id=>$(id).value=''); filter=''; render(); });
   document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{filter=filter===ch.dataset.f?'':ch.dataset.f;render();}));
-  $('sideOverdue').addEventListener('click',()=>{filter=filter==='overdue'?'':'overdue';render();});
-  $('sideToday').addEventListener('click',()=>{filter=filter==='today'?'':'today';render();});
+  $('navMine').addEventListener('click',()=>{ setArea('todas'); filter=filter==='mine'?'':'mine'; render(); });
+  $('navRecent').addEventListener('click',()=>{
+    if(pop){closePop();return;}
+    const items=recentTouched.map(id=>allTasks().find(t=>t.id===id)).filter(Boolean);
+    const p=document.createElement('div'); p.className='pop recent-pop';
+    p.innerHTML='<h4>Recientes</h4>'+(items.length?items.map(t=>`<button class="recent-item" data-id="${t.id}">${esc(t.title)}<small>${esc(t.person||'Sin asignar')}</small></button>`).join(''):'<div class="recent-empty">Todavía no editaste ninguna demanda.</div>');
+    p.querySelectorAll('.recent-item').forEach(el=>el.addEventListener('click',()=>{ closePop(); const t=allTasks().find(x=>x.id===el.dataset.id); if(t) openForm(t,ownerGroup(t)); }));
+    place(p,$('navRecent')); pop=p;
+  });
+  (function(){
+    const CKEY=KEY+'-collapsed'; let collapsed=false; try{ collapsed=localStorage.getItem(CKEY)==='1'; }catch(e){}
+    const aside=$('mainAside'); aside.classList.toggle('collapsed',collapsed);
+    $('btnCollapse').addEventListener('click',()=>{ collapsed=!collapsed; aside.classList.toggle('collapsed',collapsed); try{ localStorage.setItem(CKEY,collapsed?'1':'0'); }catch(e){} });
+  })();
 
   // Panel de demanda
   let editing=null;
   function fillSel(sel,obj){ sel.innerHTML=Object.entries(obj).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join(''); }
   function openForm(t,g){
     editing=t?{t,g}:null;
+    if(t) touchRecent(t.id);
     $('fArea').innerHTML=AREAS.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
     const areaSel=g?g.area:(area!=='todas'?area:AREAS[3].id); $('fArea').value=areaSel;
     fillGroups(areaSel);
