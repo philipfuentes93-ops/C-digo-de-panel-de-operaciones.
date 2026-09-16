@@ -59,6 +59,10 @@ async function main() {
     return;
   }
   const data = JSON.parse(snap.data().json || '{"groups":[]}');
+  if (data.config && data.config.notifActivo === false) {
+    console.log('Notificaciones desactivadas desde el panel, no se envía el resumen.');
+    return;
+  }
   const now = new Date();
 
   const overdue = [], today = [], soon = [];

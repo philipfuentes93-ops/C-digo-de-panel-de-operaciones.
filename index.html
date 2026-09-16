@@ -64,7 +64,7 @@ const TABLERO_ID = "principal";
   [data-theme="noche"] .tbl th,[data-theme="noche"] .tbl td,[data-theme="noche"] .pop,[data-theme="noche"] .desc-box{background:var(--white)}
   [data-theme="noche"] .add-row input:focus,[data-theme="noche"] .cell-edit:focus,[data-theme="noche"] .task-name [contenteditable]:focus{background:var(--hover)}
   [data-theme="noche"] .btn{background:var(--hover);border-color:var(--line)}
-  [data-theme="noche"] .toolbar input,[data-theme="noche"] .toolbar select,[data-theme="noche"] .desc-box textarea{background:var(--hover);border-color:var(--line)}
+  [data-theme="noche"] .toolbar input,[data-theme="noche"] .toolbar select,[data-theme="noche"] .desc-box textarea,[data-theme="noche"] .desc-box input{background:var(--hover);border-color:var(--line)}
   [data-theme="noche"] aside .item.active{background:#2F3560}
   [data-theme="noche"] .chip.overdue{background:#4A2030;color:#FF8A9C}
   [data-theme="noche"] .chip.today{background:#4A3618;color:#FFC777}
@@ -509,20 +509,12 @@ const TABLERO_ID = "principal";
   .collapse-btn{width:24px;height:24px;border-radius:7px;background:var(--hover);color:var(--ink-2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .collapse-btn:hover{background:var(--line)}
   .collapse-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
-  .progress-wrap{padding:2px 10px 0}
-  .progress-top{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-2);margin-bottom:5px}
-  .progress-top b{color:var(--ink);font-size:12.5px}
-  .progress-bar-mini{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
-  .progress-bar-mini i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:width .3s}
-  .recent-pop{width:280px;max-width:90vw;max-height:320px;overflow:auto;padding:8px}
-  .recent-pop h4{margin:0 0 6px;font-size:13px}
-  .recent-item{display:block;width:100%;text-align:left;padding:7px 8px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
-  .recent-item:hover{background:var(--hover)}
-  .recent-item small{display:block;font-weight:500;color:var(--ink-2);font-size:11px}
-  .recent-empty{color:var(--ink-2);font-size:12.5px;padding:8px 4px;text-align:center}
+  .desc-box input[type=text],.desc-box input[type=password]{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-bottom:8px}
+  .desc-box .err{color:var(--s-detenido);font-size:12.5px;min-height:16px}
+  .desc-box .avatar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 
   aside.collapsed{width:70px}
-  aside.collapsed .brand-label,aside.collapsed .label,aside.collapsed .badge,aside.collapsed .small,aside.collapsed .progress-wrap,aside.collapsed .me-row,aside.collapsed .me button,aside.collapsed .sync span{display:none}
+  aside.collapsed .brand-label,aside.collapsed .label,aside.collapsed .badge,aside.collapsed .small,aside.collapsed .me-row,aside.collapsed .me button,aside.collapsed .sync span{display:none}
   aside.collapsed .collapse-btn svg{transform:rotate(180deg)}
   aside.collapsed .item{justify-content:center}
   aside.collapsed .brand{justify-content:center}
@@ -552,15 +544,12 @@ const TABLERO_ID = "principal";
     <button class="collapse-btn" id="btnCollapse" title="Colapsar menú"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
   </div>
   <div class="item active"><span class="ic" style="background:#6161FF"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg></span><span class="label">Demandas de clientes</span></div>
-  <div class="item" id="navMine"><span class="ic" style="background:#579BFC"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/></svg></span><span class="label">Mis demandas</span><span class="badge soft zero" id="mineBadge">0</span></div>
-  <div class="item" id="navRecent"><span class="ic" style="background:#FDAB3D"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6M12 2v3"/></svg></span><span class="label">Recientes</span></div>
   <div class="sync" id="sync"><i></i><span>Conectando…</span></div>
   <div class="sep"></div>
-  <div class="small" style="padding-bottom:2px">Cumplimiento de plazo</div>
-  <div class="progress-wrap">
-    <div class="progress-top"><span>A tiempo</span><b id="pgLabel">Sin datos</b></div>
-    <div class="progress-bar-mini"><i id="pgBar" style="width:0%"></i></div>
-  </div>
+  <div class="small" style="padding-bottom:2px">Configuración de cuenta</div>
+  <div class="item" id="navPerfil"><span class="ic" style="background:#579BFC"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/></svg></span><span class="label">Perfil básico</span></div>
+  <div class="item" id="navPass"><span class="ic" style="background:#A25DDC"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><span class="label">Cambiar contraseña</span></div>
+  <div class="item" id="navNotif"><span class="ic" style="background:#FDAB3D"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg></span><span class="label">Preferencias de notificación</span></div>
   <div class="sep"></div>
   <div class="me" id="me"></div>
   <div class="sep"></div>
@@ -653,9 +642,8 @@ const TABLERO_ID = "principal";
   const GCOLORS=['var(--g1)','var(--g2)','var(--g3)','var(--g4)','var(--g5)','var(--g6)'];
   const $=id=>document.getElementById(id);
   let data={groups:[]}; let filter=''; const DKEY=KEY+'-showdone'; let showDone=false; try{ showDone=localStorage.getItem(DKEY)==='1'; }catch(e){}
-  let myPersonaName='';
-  const RKEY=KEY+'-recent'; let recentTouched=[]; try{ recentTouched=JSON.parse(localStorage.getItem(RKEY)||'[]'); }catch(e){}
-  function touchRecent(id){ recentTouched=[id,...recentTouched.filter(x=>x!==id)].slice(0,6); try{ localStorage.setItem(RKEY,JSON.stringify(recentTouched)); }catch(e){} }
+  let currentEmail='', mpFallback=null, meFallbackName='';
+  function myProfile(){ return (data.perfiles&&data.perfiles[currentEmail])||null; }
   const recent=new Set(); /* demandas recién finalizadas en esta sesión: se siguen mostrando aunque estén ocultas las finalizadas */
   const AKEY=KEY+'-area'; let area='todas'; try{ area=localStorage.getItem(AKEY)||'todas'; }catch(e){}
   const areaById=id=>AREAS.find(a=>a.id===id);
@@ -733,10 +721,10 @@ const TABLERO_ID = "principal";
       $('loginErr').textContent='La cuenta '+email+' no está autorizada.'; auth.signOut(); return;
     }
     $('login').hidden=true;
-    const meName=email.split('@')[0].replace(/[._-]/g,' '); const mp=persona(meName)||PERSONAS.find(p=>norm(meName).includes(norm(p.name.split(' ')[0])));
-    myPersonaName=mp?mp.name:meName;
-    $('me').innerHTML=`<div class="me-row">${avatarHtml(mp?mp.name:meName,'lg')}<span>${esc(mp?mp.name:email)}</span></div><button id="btnOut">Cerrar sesión</button>`;
-    $('btnOut').addEventListener('click',()=>auth.signOut());
+    currentEmail=email;
+    const meName=email.split('@')[0].replace(/[._-]/g,' '); mpFallback=persona(meName)||PERSONAS.find(p=>norm(meName).includes(norm(p.name.split(' ')[0])));
+    meFallbackName=mpFallback?mpFallback.name:meName;
+    renderMe();
     unsub=docRef.onSnapshot(snap=>{
       if(snap.exists&&snap.data().json){ const remote=JSON.parse(snap.data().json);
         if(!$('formPanel').hidden||document.activeElement.isContentEditable||pop){ pendingRemote=remote; setSync('ok','Cambios nuevos al cerrar el panel'); return; }
@@ -789,6 +777,15 @@ const TABLERO_ID = "principal";
     const img=p&&p.photo?`<img src="${esc(p.photo)}" alt="" onerror="this.remove()">`:'';
     return `<span class="avatar ${cls||''}" style="${color?'--pc:'+color:''}" title="${esc(name)}">${ini}${img}</span>`;
   }
+  function renderMe(){
+    const ov=myProfile();
+    const name=(ov&&ov.name)?ov.name:meFallbackName;
+    const photo=(ov&&ov.photo)?ov.photo:(mpFallback&&mpFallback.photo);
+    const color=mpFallback?mpFallback.color:'';
+    const img=photo?`<img src="${esc(photo)}" alt="" onerror="this.remove()">`:'';
+    $('me').innerHTML=`<div class="me-row"><span class="avatar lg" style="${color?'--pc:'+color:''}" title="${esc(name)}">${initials(name)}${img}</span><span>${esc(name)}</span></div><button id="btnOut">Cerrar sesión</button>`;
+    $('btnOut').addEventListener('click',()=>auth.signOut());
+  }
   const allTasks=()=>data.groups.flatMap(g=>g.tasks);
   const lastLog=t=>(t.log&&t.log.length)?t.log[t.log.length-1]:null;
   const logText=t=>(t.log||[]).map(e=>stepLabel(e.step)+' '+e.text).join(' ');
@@ -800,13 +797,7 @@ const TABLERO_ID = "principal";
     allTasks().filter(t=>area==='todas'||(data.groups.find(g=>g.tasks.includes(t))||{}).area===area).forEach(t=>{const i=dueInfo(t); if(c[i.cls]!==undefined)c[i.cls]++; if(t.status===DONE) c.done++; else c.open++;});
     document.querySelectorAll('.chip').forEach(ch=>{ch.querySelector('b').textContent=c[ch.dataset.f]; ch.classList.toggle('on',filter===ch.dataset.f); ch.classList.toggle('has',c[ch.dataset.f]>0);});
     updateBell();
-    const closedWithDates=allTasks().filter(t=>t.status===DONE&&t.date&&t.doneAt);
-    const onTime=closedWithDates.filter(t=>new Date(t.doneAt).toISOString().slice(0,10)<=t.date).length;
-    if(closedWithDates.length){ $('pgLabel').textContent=Math.round(onTime/closedWithDates.length*100)+'% ('+onTime+'/'+closedWithDates.length+')'; $('pgBar').style.width=Math.round(onTime/closedWithDates.length*100)+'%'; }
-    else{ $('pgLabel').textContent='Sin datos'; $('pgBar').style.width='0%'; }
-    const mine=myPersonaName?allTasks().filter(t=>t.status!==DONE&&norm(t.person)===norm(myPersonaName)):[];
-    const mineUrgent=mine.some(t=>['overdue','today'].includes(dueInfo(t).cls));
-    const mineBadge=$('mineBadge'); mineBadge.textContent=mine.length; mineBadge.classList.toggle('zero',!mine.length); mineBadge.classList.toggle('urgent',mineUrgent);
+    renderMe();
     refreshFilters();
     const FIDS=['search','filtClient','filtPerson','filtDept','filtStatus'];
     FIDS.forEach(id=>$(id).classList.toggle('active',!!$(id).value));
@@ -814,7 +805,7 @@ const TABLERO_ID = "principal";
 
     const q=$('search').value.trim().toLowerCase(), fc=$('filtClient').value, fp=$('filtPerson').value, fd=$('filtDept').value, fs=$('filtStatus').value;
     $('showDone').checked=showDone;
-    const matchF=t=>{ if(filter==='mine') return t.status!==DONE&&norm(t.person)===norm(myPersonaName); if(filter==='done') return t.status===DONE; if(t.status===DONE&&!showDone&&!fs&&!recent.has(t.id)) return false; if(!filter) return true; if(filter==='open') return t.status!==DONE; return dueInfo(t).cls===filter; };
+    const matchF=t=>{ if(filter==='done') return t.status===DONE; if(t.status===DONE&&!showDone&&!fs&&!recent.has(t.id)) return false; if(!filter) return true; if(filter==='open') return t.status!==DONE; return dueInfo(t).cls===filter; };
     const tabs=$('tabs'); const pend=a=>data.groups.filter(g=>g.area===a.id).flatMap(g=>g.tasks).filter(t=>t.status!==DONE).length;
     tabs.innerHTML=`<button class="tab ${area==='todas'?'on':''}" data-a="todas"><i></i>Todas <span class="n">${allTasks().filter(t=>t.status!==DONE).length}</span></button>`+
       AREAS.map(a=>`<button class="tab ${area===a.id?'on':''}" data-a="${a.id}" style="--ac:${a.color}">${avatarHtml(a.owner)}${esc(a.name)} <small>${esc(a.owner)}</small><span class="n">${pend(a)}</span></button>`).join('');
@@ -1037,14 +1028,102 @@ const TABLERO_ID = "principal";
   $('showDone').addEventListener('change',e=>{ showDone=e.target.checked; try{ localStorage.setItem(DKEY,showDone?'1':'0'); }catch(x){} render(); });
   $('btnClear').addEventListener('click',()=>{ ['search','filtClient','filtPerson','filtDept','filtStatus'].forEach(id=>$(id).value=''); filter=''; render(); });
   document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{filter=filter===ch.dataset.f?'':ch.dataset.f;render();}));
-  $('navMine').addEventListener('click',()=>{ setArea('todas'); filter=filter==='mine'?'':'mine'; render(); });
-  $('navRecent').addEventListener('click',()=>{
+  function compressAvatar(file){
+    return new Promise((res,rej)=>{
+      const img=new Image(); const url=URL.createObjectURL(file);
+      img.onload=()=>{ URL.revokeObjectURL(url); const MAX=160; const w=img.width,h=img.height; const s=Math.min(w,h);
+        const c=document.createElement('canvas'); c.width=MAX; c.height=MAX;
+        c.getContext('2d').drawImage(img,(w-s)/2,(h-s)/2,s,s,0,0,MAX,MAX);
+        res(c.toDataURL('image/jpeg',0.85)); };
+      img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('Archivo no válido')); };
+      img.src=url;
+    });
+  }
+  $('navPerfil').addEventListener('click',()=>{
     if(pop){closePop();return;}
-    const items=recentTouched.map(id=>allTasks().find(t=>t.id===id)).filter(Boolean);
-    const p=document.createElement('div'); p.className='pop recent-pop';
-    p.innerHTML='<h4>Recientes</h4>'+(items.length?items.map(t=>`<button class="recent-item" data-id="${t.id}">${esc(t.title)}<small>${esc(t.person||'Sin asignar')}</small></button>`).join(''):'<div class="recent-empty">Todavía no editaste ninguna demanda.</div>');
-    p.querySelectorAll('.recent-item').forEach(el=>el.addEventListener('click',()=>{ closePop(); const t=allTasks().find(x=>x.id===el.dataset.id); if(t) openForm(t,ownerGroup(t)); }));
-    place(p,$('navRecent')); pop=p;
+    const ov=myProfile()||{};
+    const curName=ov.name||meFallbackName;
+    const curPhoto=ov.photo||(mpFallback&&mpFallback.photo)||'';
+    const color=mpFallback?mpFallback.color:'';
+    let newPhoto=null;
+    const p=document.createElement('div'); p.className='desc-box';
+    p.innerHTML=`<h4>Perfil básico</h4>
+      <div class="avatar-row">
+        <span class="avatar lg" id="pfAvatarPrev" style="${color?'--pc:'+color:''}">${curPhoto?`<img src="${esc(curPhoto)}" alt="">`:initials(curName)}</span>
+        <label class="btn" style="cursor:pointer">Cambiar foto<input type="file" accept="image/*" id="pfPhoto" hidden></label>
+      </div>
+      <input type="text" id="pfName" placeholder="Nombre visible" value="${esc(curName)}">
+      <div class="err" id="pfErr"></div>
+      <div class="r"><button class="btn" data-a="c">Cancelar</button><button class="btn primary" data-a="s">Guardar</button></div>`;
+    p.querySelector('#pfPhoto').addEventListener('change',async e=>{
+      const f=e.target.files[0]; if(!f) return;
+      try{ newPhoto=await compressAvatar(f); p.querySelector('#pfAvatarPrev').innerHTML=`<img src="${esc(newPhoto)}" alt="">`; }
+      catch(err){ p.querySelector('#pfErr').textContent='No se pudo procesar la imagen.'; }
+    });
+    p.querySelector('[data-a=c]').addEventListener('click',closePop);
+    p.querySelector('[data-a=s]').addEventListener('click',()=>{
+      const name=p.querySelector('#pfName').value.trim();
+      if(!name){ p.querySelector('#pfErr').textContent='Escribe un nombre.'; return; }
+      if(!data.perfiles) data.perfiles={};
+      data.perfiles[currentEmail]={ name, photo:newPhoto||curPhoto||'' };
+      save(); closePop(); renderMe(); toast('Perfil actualizado');
+    });
+    place(p,$('navPerfil')); pop=p;
+  });
+  $('navPass').addEventListener('click',()=>{
+    if(pop){closePop();return;}
+    const p=document.createElement('div'); p.className='desc-box';
+    p.innerHTML=`<h4>Cambiar contraseña</h4>
+      <input type="password" id="pwCur" placeholder="Contraseña actual" autocomplete="current-password">
+      <input type="password" id="pwNew" placeholder="Nueva contraseña" autocomplete="new-password">
+      <input type="password" id="pwNew2" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+      <div class="err" id="pwErr"></div>
+      <div class="r"><button class="btn" data-a="c">Cancelar</button><button class="btn primary" data-a="s">Cambiar</button></div>`;
+    const submit=async()=>{
+      const cur=p.querySelector('#pwCur').value, n1=p.querySelector('#pwNew').value, n2=p.querySelector('#pwNew2').value;
+      const err=p.querySelector('#pwErr'); err.textContent='';
+      if(!cur||!n1||!n2){ err.textContent='Completa los tres campos.'; return; }
+      if(n1.length<6){ err.textContent='La nueva contraseña debe tener al menos 6 caracteres.'; return; }
+      if(n1!==n2){ err.textContent='Las contraseñas nuevas no coinciden.'; return; }
+      try{
+        const cred=firebase.auth.EmailAuthProvider.credential(auth.currentUser.email,cur);
+        await auth.currentUser.reauthenticateWithCredential(cred);
+        await auth.currentUser.updatePassword(n1);
+        closePop(); toast('Contraseña actualizada');
+      }catch(e){
+        const m={'auth/wrong-password':'La contraseña actual es incorrecta.','auth/invalid-credential':'La contraseña actual es incorrecta.','auth/weak-password':'La nueva contraseña es muy débil.','auth/too-many-requests':'Demasiados intentos, espera unos minutos.'};
+        err.textContent=m[e.code]||('No se pudo cambiar: '+e.message);
+      }
+    };
+    p.querySelector('[data-a=c]').addEventListener('click',closePop);
+    p.querySelector('[data-a=s]').addEventListener('click',submit);
+    p.querySelector('#pwNew2').addEventListener('keydown',e=>{ if(e.key==='Enter') submit(); });
+    place(p,$('navPass')); pop=p;
+  });
+  $('navNotif').addEventListener('click',()=>{
+    if(pop){closePop();return;}
+    const isOwner=currentEmail==='pfuentesarroyo@coca-cola.com';
+    const activo=!data.config||data.config.notifActivo!==false;
+    const p=document.createElement('div'); p.className='desc-box';
+    p.innerHTML=isOwner
+      ? `<h4>Preferencias de notificación</h4>
+         <label style="display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer">
+           <input type="checkbox" id="notifChk" style="width:17px;height:17px" ${activo?'checked':''}>
+           <span>Recibir el resumen diario por correo</span>
+         </label>
+         <div class="r"><button class="btn" data-a="c">Cerrar</button></div>`
+      : `<h4>Preferencias de notificación</h4>
+         <p style="color:var(--ink-2);font-size:12.5px">No disponible para tu cuenta todavía: el resumen diario solo se puede enviar a un correo por ahora.</p>
+         <div class="r"><button class="btn" data-a="c">Cerrar</button></div>`;
+    p.querySelector('[data-a=c]').addEventListener('click',closePop);
+    if(isOwner){
+      p.querySelector('#notifChk').addEventListener('change',e=>{
+        if(!data.config) data.config={};
+        data.config.notifActivo=e.target.checked;
+        save(); toast(e.target.checked?'Resumen diario activado':'Resumen diario desactivado');
+      });
+    }
+    place(p,$('navNotif')); pop=p;
   });
   (function(){
     const CKEY=KEY+'-collapsed'; let collapsed=false; try{ collapsed=localStorage.getItem(CKEY)==='1'; }catch(e){}
@@ -1057,7 +1136,6 @@ const TABLERO_ID = "principal";
   function fillSel(sel,obj){ sel.innerHTML=Object.entries(obj).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join(''); }
   function openForm(t,g){
     editing=t?{t,g}:null;
-    if(t) touchRecent(t.id);
     $('fArea').innerHTML=AREAS.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
     const areaSel=g?g.area:(area!=='todas'?area:AREAS[3].id); $('fArea').value=areaSel;
     fillGroups(areaSel);
