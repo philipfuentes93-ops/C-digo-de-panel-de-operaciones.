@@ -556,9 +556,9 @@ const TABLERO_ID = "principal";
   <div class="item" id="navRecent"><span class="ic" style="background:#FDAB3D"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6M12 2v3"/></svg></span><span class="label">Recientes</span></div>
   <div class="sync" id="sync"><i></i><span>Conectando…</span></div>
   <div class="sep"></div>
-  <div class="small" style="padding-bottom:2px">Progreso general</div>
+  <div class="small" style="padding-bottom:2px">Cumplimiento de plazo</div>
   <div class="progress-wrap">
-    <div class="progress-top"><span>Finalizadas</span><b id="pgLabel">0 / 0</b></div>
+    <div class="progress-top"><span>A tiempo</span><b id="pgLabel">Sin datos</b></div>
     <div class="progress-bar-mini"><i id="pgBar" style="width:0%"></i></div>
   </div>
   <div class="sep"></div>
@@ -800,8 +800,10 @@ const TABLERO_ID = "principal";
     allTasks().filter(t=>area==='todas'||(data.groups.find(g=>g.tasks.includes(t))||{}).area===area).forEach(t=>{const i=dueInfo(t); if(c[i.cls]!==undefined)c[i.cls]++; if(t.status===DONE) c.done++; else c.open++;});
     document.querySelectorAll('.chip').forEach(ch=>{ch.querySelector('b').textContent=c[ch.dataset.f]; ch.classList.toggle('on',filter===ch.dataset.f); ch.classList.toggle('has',c[ch.dataset.f]>0);});
     updateBell();
-    const gc={done:0,open:0}; allTasks().forEach(t=>{ if(t.status===DONE) gc.done++; else gc.open++; });
-    const gTotal=gc.done+gc.open; $('pgLabel').textContent=gc.done+' / '+gTotal; $('pgBar').style.width=(gTotal?Math.round(gc.done/gTotal*100):0)+'%';
+    const closedWithDates=allTasks().filter(t=>t.status===DONE&&t.date&&t.doneAt);
+    const onTime=closedWithDates.filter(t=>new Date(t.doneAt).toISOString().slice(0,10)<=t.date).length;
+    if(closedWithDates.length){ $('pgLabel').textContent=Math.round(onTime/closedWithDates.length*100)+'% ('+onTime+'/'+closedWithDates.length+')'; $('pgBar').style.width=Math.round(onTime/closedWithDates.length*100)+'%'; }
+    else{ $('pgLabel').textContent='Sin datos'; $('pgBar').style.width='0%'; }
     const mine=myPersonaName?allTasks().filter(t=>t.status!==DONE&&norm(t.person)===norm(myPersonaName)):[];
     const mineUrgent=mine.some(t=>['overdue','today'].includes(dueInfo(t).cls));
     const mineBadge=$('mineBadge'); mineBadge.textContent=mine.length; mineBadge.classList.toggle('zero',!mine.length); mineBadge.classList.toggle('urgent',mineUrgent);
