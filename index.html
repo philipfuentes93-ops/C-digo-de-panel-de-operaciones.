@@ -1368,10 +1368,16 @@ const TABLERO_ID = "principal";
     const _AVAIL=4.0; // espacio disponible bajo el encabezado (pulgadas)
     const _MAX_PER_SLIDE=2; // máximo 2 demandas por slide
     const _HDR_H=0.3; // altura encabezado turquesa
+    const _CPL=34; // caracteres aprox. por línea visible en la columna de Status (fontSize 6.5, ancho 1.85")
     const _calcRH=t=>{
-      const n=(t.log||[]).length;
-      // ~0.18 por línea de log, mínimo 0.7, máximo 1.8
-      return Math.min(1.8,Math.max(0.7,n*0.18));
+      const entries=t.log||[];
+      if(!entries.length) return 0.7;
+      // cada entrada puede envolver varias líneas visuales según su largo real, no solo 1 por entrada
+      const lines=entries.reduce((sum,e)=>{
+        const txt=`${_fd(e.d)}: ${e.step?'['+stepLabel(e.step)+'] ':''}${e.text}`;
+        return sum+Math.max(1,Math.ceil(txt.length/_CPL));
+      },0);
+      return Math.min(_AVAIL-_HDR_H,Math.max(0.7,0.15+lines*0.155));
     };
     // Agrupar: máximo 2 por slide Y que quepan por altura
     const _slides=[];let _cur=[];let _curH=_HDR_H;
