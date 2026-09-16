@@ -445,16 +445,13 @@ const TABLERO_ID = "principal";
   .showdone-link{color:#0E7A52;font-weight:600;font-size:12.5px;padding:8px 22px;width:100%;text-align:left}
   .showdone-link:hover{text-decoration:underline}
   .toggle{white-space:nowrap;background:transparent;border-color:transparent;padding:6px 4px}
-  .toolbar{gap:8px}
-  .toolbar input#search{min-width:170px;width:190px}
-  .toolbar select{padding:8px 8px}
-  .chip{min-width:0;padding:6px 10px 6px 8px;gap:8px}
-  .chip .cic{width:30px;height:30px}
+  .toolbar{gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+  .toolbar input#search{min-width:170px;width:190px;flex-shrink:0}
+  .toolbar select{padding:8px 8px;flex-shrink:0}
+  .chip{min-width:0;padding:6px 10px 6px 8px;gap:8px;flex-shrink:0;white-space:nowrap}
+  .chip .cic{width:30px;height:30px;flex-shrink:0}
   .chip b{font-size:18px}
   .chip .ct small{font-size:11px}
-  .chip-row{display:flex;flex-wrap:nowrap;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:2px}
-  .chip-row .chip{flex:1 1 0;min-width:0;white-space:nowrap}
-  .chip-row .chip .ct{overflow:hidden;text-overflow:ellipsis}
   .row.due-overdue td{background:#FFE9EC;box-shadow:inset 4px 0 0 #E2445C}
   .row.due-overdue:hover td{background:#FFDDE2}
   .row.due-overdue .tname{color:#B7233C;font-weight:700}
@@ -580,8 +577,6 @@ const TABLERO_ID = "principal";
     <select id="filtStatus"><option value="">Etapa</option></select>
     <button id="btnClear" hidden>✕ Limpiar filtros</button>
     <label class="toggle"><input type="checkbox" id="showDone"> Mostrar finalizadas</label>
-  </div>
-  <div class="chip-row">
     <button class="chip open" data-f="open"><span class="cic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg></span><span class="ct"><b>0</b><small>Abiertas</small></span></button>
     <button class="chip overdue" data-f="overdue"><span class="cic"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span><span class="ct"><b>0</b><small>Vencidas</small></span></button>
     <button class="chip today" data-f="today"><span class="cic"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6M12 2v3"/></svg></span><span class="ct"><b>0</b><small>Vencen hoy</small></span></button>
