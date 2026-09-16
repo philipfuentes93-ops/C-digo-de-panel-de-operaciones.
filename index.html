@@ -445,13 +445,18 @@ const TABLERO_ID = "principal";
   .showdone-link{color:#0E7A52;font-weight:600;font-size:12.5px;padding:8px 22px;width:100%;text-align:left}
   .showdone-link:hover{text-decoration:underline}
   .toggle{white-space:nowrap;background:transparent;border-color:transparent;padding:6px 4px}
-  .toolbar{gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
-  .toolbar input#search{min-width:170px;width:190px;flex-shrink:0}
-  .toolbar select{padding:8px 8px;flex-shrink:0}
-  .chip{min-width:0;padding:6px 10px 6px 8px;gap:8px;flex-shrink:0;white-space:nowrap}
-  .chip .cic{width:30px;height:30px;flex-shrink:0}
-  .chip b{font-size:18px}
-  .chip .ct small{font-size:11px}
+  .toolbar{gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .toolbar::-webkit-scrollbar{height:5px}
+  .toolbar::-webkit-scrollbar-track{background:transparent}
+  .toolbar::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .toolbar::-webkit-scrollbar-thumb:hover{background:var(--ink-2)}
+  .toolbar input#search{min-width:130px;width:140px;flex-shrink:0}
+  .toolbar select{padding:8px 6px;flex-shrink:0}
+  .chip{min-width:0;padding:6px 9px 6px 7px;gap:6px;flex-shrink:0;white-space:nowrap}
+  .chip .cic{width:26px;height:26px;flex-shrink:0}
+  .chip .cic svg{width:15px;height:15px}
+  .chip b{font-size:16px}
+  .chip .ct small{font-size:10.5px}
   .row.due-overdue td{background:#FFE9EC;box-shadow:inset 4px 0 0 #E2445C}
   .row.due-overdue:hover td{background:#FFDDE2}
   .row.due-overdue .tname{color:#B7233C;font-weight:700}
