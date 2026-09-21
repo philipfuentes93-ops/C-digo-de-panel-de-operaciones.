@@ -4,8 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hoja de Ruta — Despachos</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ============================================================
+   CONFIGURACIÓN GOOGLE MAPS
+   Conseguí tu clave en https://console.cloud.google.com/google/maps-apis
+   (creá un proyecto → habilitá "Maps JavaScript API" → Credenciales →
+   Crear credenciales → Clave de API) y pegala acá reemplazando el texto.
+   ============================================================ */
+const GOOGLE_MAPS_API_KEY = "PEGA_TU_CLAVE_DE_GOOGLE_MAPS_AQUI";
+window.__googleMapsReady = false;
+window.initGoogleMapsCallback = function(){
+  window.__googleMapsReady = true;
+  if(window.__onGoogleMapsReady) window.__onGoogleMapsReady();
+};
+(function(){
+  var s = document.createElement('script');
+  s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(GOOGLE_MAPS_API_KEY) + '&loading=async&callback=initGoogleMapsCallback';
+  s.async = true;
+  s.defer = true;
+  document.head.appendChild(s);
+})();
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -791,7 +810,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     </section>
 
     <p class="footer-note">
-      Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. El mapa ubica cada dirección automáticamente con OpenStreetMap (gratis, sin clave) — puede tardar unos segundos por despacho. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
+      Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. El mapa se muestra con Google Maps y cada dirección se ubica automáticamente (geocodificación gratuita) — puede tardar unos segundos por despacho. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
     </p>
   </div>
 
@@ -932,60 +951,85 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   }
 
   /* ============================================================
-     MAPA (Leaflet + OpenStreetMap) Y GEOCODIFICACIÓN (Nominatim)
+     MAPA (Google Maps) Y GEOCODIFICACIÓN (Nominatim, gratis)
      ============================================================ */
-  let map = null, markersLayer = null;
+  let map = null, mapMarkers = [];
   let geocodeBusy = false;
   const geocodeQueue = [];
 
   function initMap(){
-    if(map || typeof L === 'undefined') return;
-    map = L.map('mapView', { scrollWheelZoom: true }).setView([-33.4489, -70.6693], 11);
-    // Tiles públicos de Esri (gratis, sin API key). Se probó primero con
-    // tile.openstreetmap.org (bloquea el acceso "tipo app" sin Referer de
-    // sitio web) y luego con CARTO (ahora exige API key en su capa gratuita).
-    // World Topo Map (mismo proveedor Esri, sin clave) tiene parques/áreas
-    // verdes y se ve más limpio que World Street Map.
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19,
-      attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, Intermap, increment P Corp., GEBCO, USGS, FAO, NPS, NRCAN, GeoBase, IGN, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), &copy; OpenStreetMap contributors, and the GIS User Community'
-    }).addTo(map);
-    markersLayer = L.layerGroup().addTo(map);
+    if(map || typeof google === 'undefined' || !google.maps) return;
+    map = new google.maps.Map(document.getElementById('mapView'), {
+      center: { lat: -33.4489, lng: -70.6693 },
+      zoom: 11,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
+    });
+  }
+
+  function tryInitMap(){
+    if(window.__googleMapsReady) initMap();
+    else window.__onGoogleMapsReady = initMap;
   }
 
   function updateMap(){
-    if(!map || !markersLayer) return;
-    markersLayer.clearLayers();
-    const bounds = [];
+    if(!map) return;
+    mapMarkers.forEach(m => m.setMap(null));
+    mapMarkers = [];
+    const bounds = new google.maps.LatLngBounds();
+    let hasPoints = false;
 
     if(state.startLat != null && state.startLng != null){
-      const startIcon = L.divIcon({ className: 'start-pin', html: '🏁', iconSize: [24,24] });
-      L.marker([state.startLat, state.startLng], { icon: startIcon })
-        .addTo(markersLayer)
-        .bindPopup('<b>Punto de partida</b><br>' + escapeHtml(state.puntoPartida));
-      bounds.push([state.startLat, state.startLng]);
+      const startMarker = new google.maps.Marker({
+        position: { lat: state.startLat, lng: state.startLng },
+        map,
+        label: { text: '🏁', fontSize: '16px' },
+        title: 'Punto de partida'
+      });
+      const iw = new google.maps.InfoWindow({
+        content: '<b>Punto de partida</b><br>' + escapeHtml(state.puntoPartida)
+      });
+      startMarker.addListener('click', () => iw.open(map, startMarker));
+      mapMarkers.push(startMarker);
+      bounds.extend(startMarker.getPosition());
+      hasPoints = true;
     }
 
     state.rows.forEach((row, idx) => {
       if(row.lat == null || row.lng == null) return;
       const color = ESTADO_COLORS[row.estado] || ESTADO_COLORS.pendiente;
       const label = (ESTADOS.find(e => e.value === row.estado) || {}).label || row.estado;
-      L.circleMarker([row.lat, row.lng], {
-        radius: 9, weight: 2, color: '#fff', fillColor: color, fillOpacity: 1
-      })
-        .addTo(markersLayer)
-        .bindPopup(
+      const marker = new google.maps.Marker({
+        position: { lat: row.lat, lng: row.lng },
+        map,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: color,
+          fillOpacity: 1,
+          strokeColor: '#fff',
+          strokeWeight: 2
+        }
+      });
+      const iw = new google.maps.InfoWindow({
+        content:
           '<b>' + (idx + 1) + '. ' + (escapeHtml(row.cliente) || '(sin cliente)') + '</b><br>' +
           escapeHtml(row.direccion) + (row.comuna ? ', ' + escapeHtml(row.comuna) : '') + '<br>' +
           'Estado: ' + escapeHtml(label)
-        );
-      bounds.push([row.lat, row.lng]);
+      });
+      marker.addListener('click', () => iw.open(map, marker));
+      mapMarkers.push(marker);
+      bounds.extend(marker.getPosition());
+      hasPoints = true;
     });
 
-    if(bounds.length === 1){
-      map.setView(bounds[0], 15);
-    } else if(bounds.length > 1){
-      map.fitBounds(bounds, { padding: [36, 36], maxZoom: 15 });
+    if(!hasPoints) return;
+    if(mapMarkers.length === 1){
+      map.setCenter(bounds.getCenter());
+      map.setZoom(15);
+    } else {
+      map.fitBounds(bounds, 40);
     }
   }
 
@@ -1819,7 +1863,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   });
 
   bindHeaderFields();
-  initMap();
+  tryInitMap();
   renderRows();
 
   /* ============================================================
@@ -1914,7 +1958,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       $('avatarInitial').title = email;
       firebaseReady = true;
 
-      if(map) map.invalidateSize();
+      tryInitMap();
+      if(map) google.maps.event.trigger(map, 'resize');
       updateMap();
       geocodeAllPending();
 
