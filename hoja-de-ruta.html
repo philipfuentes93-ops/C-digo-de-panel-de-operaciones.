@@ -1059,11 +1059,17 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   function geocodeRow(row){
     if(!row.direccion || !row.direccion.trim()) return;
     const query = [row.direccion, row.comuna, 'Chile'].filter(Boolean).join(', ');
-    if(row._geoQuery === query && row.lat != null) return;
+    // Ya se intentó geocodificar esta misma dirección (haya encontrado
+    // coordenadas o no) — no reintentar en cada render, solo cuando el
+    // texto de la dirección/comuna realmente cambie.
+    if(row._geoQuery === query) return;
     row._geoQuery = query;
     enqueueGeocode(query, coords => {
-      row.lat = coords ? coords.lat : null;
-      row.lng = coords ? coords.lng : null;
+      const lat = coords ? coords.lat : null;
+      const lng = coords ? coords.lng : null;
+      if(row.lat === lat && row.lng === lng) return; // sin cambios reales, no re-guardar
+      row.lat = lat;
+      row.lng = lng;
       updateMap();
       cacheLocal();
       commit();
@@ -1074,11 +1080,14 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     const q = (state.puntoPartida || '').trim();
     if(!q) return;
     const query = q + ', Chile';
-    if(state._geoStartQuery === query && state.startLat != null) return;
+    if(state._geoStartQuery === query) return;
     state._geoStartQuery = query;
     enqueueGeocode(query, coords => {
-      state.startLat = coords ? coords.lat : null;
-      state.startLng = coords ? coords.lng : null;
+      const lat = coords ? coords.lat : null;
+      const lng = coords ? coords.lng : null;
+      if(state.startLat === lat && state.startLng === lng) return;
+      state.startLat = lat;
+      state.startLng = lng;
       updateMap();
       cacheLocal();
       commit();
