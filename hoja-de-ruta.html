@@ -100,48 +100,46 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .app[hidden]{ display:none; }
 
   .sidebar{
-    width:230px;
+    width:72px;
     flex:none;
     background:var(--sidebar);
     color:var(--sidebar-text);
     display:flex;
     flex-direction:column;
-    padding:20px 14px;
+    align-items:center;
+    padding:18px 0;
     gap:22px;
   }
   .sidebar-logo{
     display:flex;
+    flex-direction:column;
     align-items:center;
-    gap:10px;
-    padding:0 6px;
+    gap:4px;
   }
   .sidebar-logo .badge{
-    width:34px; height:34px;
-    border-radius:10px;
+    width:38px; height:38px;
+    border-radius:11px;
     background:linear-gradient(135deg,var(--accent),#8b7dff);
     display:flex; align-items:center; justify-content:center;
-    font-size:17px;
+    font-size:18px;
     flex:none;
   }
-  .sidebar-logo .name{
-    color:#fff;
-    font-weight:700;
-    font-size:15.5px;
-    letter-spacing:0.2px;
-  }
-  .sidebar-nav{ display:flex; flex-direction:column; gap:2px; }
+  .sidebar-logo .name{ display:none; }
+  .sidebar-nav{ display:flex; flex-direction:column; gap:8px; align-items:center; width:100%; }
   .nav-item{
     display:flex;
     align-items:center;
-    gap:11px;
-    padding:10px 12px;
-    border-radius:9px;
-    font-size:13.5px;
+    justify-content:center;
+    width:44px; height:44px;
+    border-radius:11px;
+    font-size:14px;
     font-weight:600;
     color:var(--sidebar-text);
-    cursor:default;
+    cursor:pointer;
   }
-  .nav-item .nav-icon{ font-size:15px; width:18px; text-align:center; }
+  .nav-item:hover{ background:rgba(255,255,255,0.06); }
+  .nav-item .nav-icon{ font-size:18px; }
+  .nav-item .nav-label{ display:none; }
   .nav-item.active{
     background:var(--sidebar-2);
     color:var(--sidebar-text-active);
@@ -150,13 +148,15 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .sidebar-spacer{ flex:1; }
   .sidebar-footer{
     border-top:1px solid rgba(255,255,255,0.08);
-    padding-top:14px;
+    padding-top:16px;
     display:flex;
+    flex-direction:column;
     align-items:center;
     gap:10px;
+    width:100%;
   }
   .avatar{
-    width:32px; height:32px;
+    width:34px; height:34px;
     border-radius:50%;
     background:#fff;
     color:var(--accent-dark);
@@ -164,26 +164,21 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-size:13px;
     display:flex; align-items:center; justify-content:center;
     flex:none;
+    cursor:default;
   }
-  .sidebar-user{ overflow:hidden; }
-  .user-email{
-    font-size:12px;
-    color:#dcdaf3;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    max-width:130px;
-  }
+  .sidebar-user{ display:flex; flex-direction:column; align-items:center; }
+  .user-email{ display:none; }
   .link-btn{
     background:none;
     border:none;
     color:#9c99d8;
-    font-size:11.5px;
+    font-size:16px;
     font-weight:700;
-    padding:0;
+    padding:4px;
     cursor:pointer;
+    line-height:1;
   }
-  .link-btn:hover{ color:#fff; text-decoration:underline; background:none; }
+  .link-btn:hover{ color:#fff; background:none; }
 
   .content{
     flex:1;
@@ -193,16 +188,16 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   }
 
   .sync-banner{
-    display:flex;
+    display:inline-flex;
     align-items:center;
-    gap:10px;
-    padding:11px 16px;
-    border-radius:10px;
-    font-size:13px;
-    font-weight:600;
-    margin-bottom:20px;
+    gap:7px;
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
   }
-  .sync-banner .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+  .sync-banner .dot{ width:8px; height:8px; border-radius:50%; flex:none; }
   .sync-banner.ok{ background:var(--ok-bg); color:var(--ok); }
   .sync-banner.ok .dot{ background:var(--ok); }
   .sync-banner.saving{ background:var(--warn-bg); color:var(--warn); }
@@ -213,7 +208,14 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .sync-banner.local .dot{ background:var(--pend); }
   @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
 
-  .content-header{ margin-bottom:18px; }
+  .content-header{
+    margin-bottom:18px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
   .content-header h1{
     margin:0 0 4px;
     font-size:24px;
@@ -224,6 +226,47 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     color:var(--muted);
     font-size:13.5px;
   }
+
+  .kpi-bar{
+    padding:14px 22px;
+    margin-bottom:18px;
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:20px 32px;
+  }
+  .kpi-progress{ display:flex; align-items:center; gap:12px; flex:1; min-width:220px; }
+  .kpi-progress .kpi-label{ font-size:12px; font-weight:700; color:var(--muted); white-space:nowrap; }
+  .progress-track{
+    flex:1;
+    height:8px;
+    border-radius:6px;
+    background:var(--border);
+    overflow:hidden;
+    min-width:100px;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent),#8b7dff);
+    border-radius:6px;
+    transition:width .3s ease;
+  }
+  .kpi-progress .kpi-pct{ font-size:13px; font-weight:800; color:var(--text); }
+  .kpi-counts{ display:flex; gap:10px; flex-wrap:wrap; }
+  .kpi-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+  }
+  .kpi-chip b{ font-size:13px; }
+  .kpi-chip.pendiente{ background:var(--pend-bg); color:var(--pend); }
+  .kpi-chip.en-ruta{ background:var(--warn-bg); color:var(--warn); }
+  .kpi-chip.entregado{ background:var(--ok-bg); color:var(--ok); }
+  .kpi-chip.no-entregado{ background:var(--bad-bg); color:var(--bad); }
 
   .card{
     background:var(--panel);
@@ -297,20 +340,44 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   button.danger:hover{ background:var(--bad-bg); }
   .spacer{ flex:1; }
 
-  .map-card{ padding:14px 16px 16px; margin-bottom:16px; }
-  .map-head{
+  .map-hero{
+    position:relative;
+    border-radius:14px;
+    overflow:hidden;
+    margin-bottom:18px;
+    border:1px solid var(--border);
+    box-shadow:0 2px 10px rgba(30,30,70,0.04);
+  }
+  #mapView{ height:480px; background:#e9eaf3; }
+  .map-overlay{
+    position:absolute;
+    top:14px;
+    left:14px;
+    z-index:10;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 10px 28px rgba(20,20,50,0.2);
+    padding:12px 14px;
+    max-width:260px;
+  }
+  .map-overlay-head{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    flex-wrap:wrap;
-    gap:8px;
-    margin-bottom:10px;
+    gap:10px;
   }
-  .map-head h2{ margin:0; font-size:14px; color:var(--text); }
-  .map-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); font-weight:600; }
-  .map-legend .swatch{ display:inline-flex; align-items:center; gap:5px; }
+  .map-overlay-head .link-btn{ color:var(--muted); font-size:11px; font-weight:700; }
+  .map-overlay-head .link-btn:hover{ color:var(--text); }
+  .map-overlay-body{ margin-top:10px; }
+  .map-overlay-body[hidden]{ display:none; }
+  .map-legend{ display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--muted); font-weight:600; }
+  .map-legend .swatch{ display:inline-flex; align-items:center; gap:7px; }
   .map-legend .swatch .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
-  #mapView{ height:380px; border-radius:10px; overflow:hidden; background:#e9eaf3; }
+
+  @media (max-width:600px){
+    .map-overlay{ position:static; margin:12px; max-width:none; box-shadow:none; border:1px solid var(--border); }
+    #mapView{ height:320px; }
+  }
 
   .table-card{ overflow:hidden; margin-bottom:16px; }
   .table-wrap{ overflow-x:auto; }
@@ -419,29 +486,48 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     line-height:1.6;
   }
 
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+    gap:16px;
+    margin-bottom:18px;
+  }
+  .stat-tile{
+    padding:16px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .stat-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    color:var(--muted);
+    font-weight:700;
+  }
+  .stat-value{
+    font-size:24px;
+    font-weight:800;
+    color:var(--text);
+  }
+  .chart-card{ padding:18px 22px; margin-bottom:16px; }
+  .chart-card h2{ margin:0 0 4px; font-size:14px; color:var(--text); }
+  .chart-note{ margin:0 0 10px; font-size:12px; color:var(--muted); }
+  .chart-holder{ overflow-x:auto; }
+  .chart-empty{ font-size:13px; color:var(--muted); padding:20px 0; margin:0; }
+
   @media print{
     body{ background:#fff; }
-    .toolbar, .icon-btn, .col-actions, .sync-banner, .sidebar, .map-card{ display:none !important; }
+    .toolbar, .icon-btn, .col-actions, .sync-banner, .sidebar, .map-hero, .kpi-bar{ display:none !important; }
     .content{ padding:0; max-width:none; }
     .card{ box-shadow:none; border:none; }
     thead th{ position:static; }
   }
 
   @media (max-width:820px){
-    .app{ flex-direction:column; }
-    .sidebar{
-      width:100%;
-      flex-direction:row;
-      align-items:center;
-      padding:12px 16px;
-      gap:14px;
-    }
-    .sidebar-nav{ display:none; }
-    .sidebar-spacer{ flex:1; }
-    .sidebar-footer{ border-top:none; padding-top:0; }
     .content{ padding:18px 16px 32px; }
     .summary-card{ gap:14px 24px; }
-    #mapView{ height:260px; }
+    .kpi-bar{ padding:14px 16px; }
   }
 </style>
 </head>
@@ -464,33 +550,44 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
 <div class="app" id="sheet" hidden>
   <aside class="sidebar">
-    <div class="sidebar-logo">
+    <div class="sidebar-logo" title="Hoja de Ruta">
       <span class="badge">🚚</span>
       <span class="name">Hoja de Ruta</span>
     </div>
     <nav class="sidebar-nav">
-      <div class="nav-item active"><span class="nav-icon">📦</span> Despachos</div>
+      <div class="nav-item active" id="navDespachos" title="Despachos"><span class="nav-icon">📦</span><span class="nav-label">Despachos</span></div>
+      <div class="nav-item" id="navReportes" title="Reportes"><span class="nav-icon">📊</span><span class="nav-label">Reportes</span></div>
     </nav>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-footer">
-      <div class="avatar" id="avatarInitial">?</div>
+      <div class="avatar" id="avatarInitial" title="">?</div>
       <div class="sidebar-user">
         <div class="user-email" id="sessionEmail"></div>
-        <button class="link-btn" id="btnLogout">Cerrar sesión</button>
+        <button class="link-btn" id="btnLogout" title="Cerrar sesión">⎋</button>
       </div>
     </div>
   </aside>
 
   <main class="content">
-    <div class="sync-banner local" id="syncBar">
-      <span class="dot"></span>
-      <span id="syncMsg">Conectando…</span>
-    </div>
-
+  <div id="viewDespachos">
     <div class="content-header">
       <h1>Despachos</h1>
       <p>Coordiná las entregas del día con tu transportista — se actualiza en vivo para los dos.</p>
     </div>
+
+    <section class="card kpi-bar">
+      <div class="kpi-progress">
+        <span class="kpi-label">Progreso de entregas</span>
+        <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <span class="kpi-pct" id="progressPct">0%</span>
+      </div>
+      <div class="kpi-counts">
+        <span class="kpi-chip pendiente"><b id="countPendiente">0</b> Pendiente</span>
+        <span class="kpi-chip en-ruta"><b id="countEnRuta">0</b> En ruta</span>
+        <span class="kpi-chip entregado"><b id="countEntregado">0</b> Entregado</span>
+        <span class="kpi-chip no-entregado"><b id="countNoEntregado">0</b> No entregado</span>
+      </div>
+    </section>
 
     <section class="card summary-card">
       <div class="field grow">
@@ -511,18 +608,26 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       </div>
     </section>
 
-    <section class="card map-card">
-      <div class="map-head">
-        <h2>Mapa de despachos</h2>
-        <div class="map-legend">
-          <span class="swatch"><span class="dot" style="background:#71708f"></span> Pendiente</span>
-          <span class="swatch"><span class="dot" style="background:#b8860b"></span> En ruta</span>
-          <span class="swatch"><span class="dot" style="background:#1f9d55"></span> Entregado</span>
-          <span class="swatch"><span class="dot" style="background:#d33f3f"></span> No entregado</span>
+    <div class="map-hero">
+      <div id="mapView"></div>
+      <div class="map-overlay">
+        <div class="map-overlay-head">
+          <span class="sync-banner local" id="syncBar">
+            <span class="dot"></span>
+            <span id="syncMsg">Conectando…</span>
+          </span>
+          <button class="link-btn" id="btnToggleOverlay" title="Ocultar panel">Ocultar ▾</button>
+        </div>
+        <div class="map-overlay-body" id="mapOverlayBody">
+          <div class="map-legend">
+            <span class="swatch"><span class="dot" style="background:#71708f"></span> Pendiente</span>
+            <span class="swatch"><span class="dot" style="background:#b8860b"></span> En ruta</span>
+            <span class="swatch"><span class="dot" style="background:#1f9d55"></span> Entregado</span>
+            <span class="swatch"><span class="dot" style="background:#d33f3f"></span> No entregado</span>
+          </div>
         </div>
       </div>
-      <div id="mapView"></div>
-    </section>
+    </div>
 
     <div class="toolbar">
       <button class="primary" id="btnAddRow">➕ Agregar despacho</button>
@@ -568,6 +673,49 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     <p class="footer-note">
       Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. El mapa ubica cada dirección automáticamente con OpenStreetMap (gratis, sin clave) — puede tardar unos segundos por despacho. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
     </p>
+  </div>
+
+  <div id="viewReportes" hidden>
+    <div class="content-header">
+      <h1>Reportes</h1>
+      <p>Resumen de los despachos cargados en esta hoja de ruta.</p>
+    </div>
+
+    <section class="stat-grid">
+      <div class="card stat-tile">
+        <span class="stat-label">Total de despachos</span>
+        <span class="stat-value" id="statTotalDespachos">0</span>
+      </div>
+      <div class="card stat-tile">
+        <span class="stat-label">Total tarifa</span>
+        <span class="stat-value" id="statTotalTarifa">$0</span>
+      </div>
+      <div class="card stat-tile">
+        <span class="stat-label">Tarifa promedio</span>
+        <span class="stat-value" id="statTarifaProm">$0</span>
+      </div>
+      <div class="card stat-tile">
+        <span class="stat-label">Cumplimiento</span>
+        <span class="stat-value" id="statCumplimiento">0%</span>
+      </div>
+    </section>
+
+    <section class="card chart-card">
+      <h2>Despachos por estado</h2>
+      <div class="chart-holder" id="chartEstado"></div>
+    </section>
+
+    <section class="card chart-card">
+      <h2>Despachos por comuna</h2>
+      <div class="chart-holder" id="chartComuna"></div>
+    </section>
+
+    <section class="card chart-card">
+      <h2>Tarifa por despacho</h2>
+      <p class="chart-note" id="chartTarifaNote"></p>
+      <div class="chart-holder" id="chartTarifa"></div>
+    </section>
+  </div>
   </main>
 </div>
 
@@ -646,7 +794,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   }
 
   function formatMoney(n){
-    const num = Number(n) || 0;
+    const num = Math.round(Number(n) || 0);
     return '$' + num.toLocaleString('es-CL');
   }
 
@@ -790,8 +938,159 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       tbody.appendChild(tr);
     });
     recalcTotal();
+    updateKpis();
     updateMap();
     geocodeAllPending();
+    if(currentView === 'reportes') renderReportes();
+  }
+
+  function updateKpis(){
+    const counts = { pendiente: 0, 'en-ruta': 0, entregado: 0, 'no-entregado': 0 };
+    state.rows.forEach(r => { counts[r.estado] = (counts[r.estado] || 0) + 1; });
+    const total = state.rows.length || 1;
+    const pct = Math.round((counts.entregado / total) * 100);
+    $('countPendiente').textContent = counts.pendiente;
+    $('countEnRuta').textContent = counts['en-ruta'];
+    $('countEntregado').textContent = counts.entregado;
+    $('countNoEntregado').textContent = counts['no-entregado'];
+    $('progressFill').style.width = pct + '%';
+    $('progressPct').textContent = pct + '%';
+  }
+
+  $('btnToggleOverlay').addEventListener('click', () => {
+    const body = $('mapOverlayBody');
+    const btn = $('btnToggleOverlay');
+    body.hidden = !body.hidden;
+    btn.textContent = body.hidden ? 'Mostrar ▸' : 'Ocultar ▾';
+  });
+
+  /* ============================================================
+     REPORTES (gráficos de barras en SVG, sin librerías)
+     ============================================================ */
+  const ACCENT_HEX = '#5b4fe6';
+  let currentView = 'despachos';
+
+  function switchView(view){
+    currentView = view;
+    const isDespachos = view === 'despachos';
+    $('viewDespachos').hidden = !isDespachos;
+    $('viewReportes').hidden = isDespachos;
+    $('navDespachos').classList.toggle('active', isDespachos);
+    $('navReportes').classList.toggle('active', !isDespachos);
+    if(!isDespachos) renderReportes();
+  }
+  $('navDespachos').addEventListener('click', () => switchView('despachos'));
+  $('navReportes').addEventListener('click', () => switchView('reportes'));
+
+  function renderBarChart(container, items, opts){
+    opts = opts || {};
+    container.innerHTML = '';
+    if(!items.length){
+      container.innerHTML = '<p class="chart-empty">Todavía no hay datos suficientes.</p>';
+      return;
+    }
+    const max = Math.max(1, ...items.map(i => i.value));
+    const rowH = 26, gap = 10, leftW = 130, svgW = 560, rightPad = 50;
+    const barMaxW = svgW - leftW - rightPad;
+    const svgH = items.length * (rowH + gap) - gap;
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + svgW + ' ' + svgH);
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', svgH);
+    svg.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+
+    items.forEach((item, i) => {
+      const y = i * (rowH + gap);
+      const barH = rowH - 6;
+      const w = Math.max(4, (item.value / max) * barMaxW);
+      const color = item.color || ACCENT_HEX;
+      const formatted = opts.formatValue ? opts.formatValue(item.value) : String(item.value);
+
+      const label = document.createElementNS(ns, 'text');
+      label.setAttribute('x', leftW - 10);
+      label.setAttribute('y', y + rowH / 2 + 4);
+      label.setAttribute('text-anchor', 'end');
+      label.setAttribute('font-size', '12');
+      label.setAttribute('fill', '#71708f');
+      label.textContent = item.label.length > 18 ? item.label.slice(0, 17) + '…' : item.label;
+      const labelTitle = document.createElementNS(ns, 'title');
+      labelTitle.textContent = item.label;
+      label.appendChild(labelTitle);
+      svg.appendChild(label);
+
+      const track = document.createElementNS(ns, 'rect');
+      track.setAttribute('x', leftW);
+      track.setAttribute('y', y + 3);
+      track.setAttribute('width', barMaxW);
+      track.setAttribute('height', barH);
+      track.setAttribute('rx', barH / 2);
+      track.setAttribute('fill', '#eef0f7');
+      svg.appendChild(track);
+
+      const bar = document.createElementNS(ns, 'rect');
+      bar.setAttribute('x', leftW);
+      bar.setAttribute('y', y + 3);
+      bar.setAttribute('width', w);
+      bar.setAttribute('height', barH);
+      bar.setAttribute('rx', barH / 2);
+      bar.setAttribute('fill', color);
+      const barTitle = document.createElementNS(ns, 'title');
+      barTitle.textContent = item.label + ': ' + formatted;
+      bar.appendChild(barTitle);
+      svg.appendChild(bar);
+
+      const valueLabel = document.createElementNS(ns, 'text');
+      valueLabel.setAttribute('x', leftW + w + 8);
+      valueLabel.setAttribute('y', y + rowH / 2 + 4);
+      valueLabel.setAttribute('font-size', '12');
+      valueLabel.setAttribute('font-weight', '700');
+      valueLabel.setAttribute('fill', '#211f3d');
+      valueLabel.textContent = formatted;
+      svg.appendChild(valueLabel);
+    });
+
+    container.appendChild(svg);
+  }
+
+  function renderReportes(){
+    const rows = state.rows.filter(r => r.cliente || r.direccion || Number(r.tarifa));
+    const total = state.rows.length;
+    const totalTarifa = state.rows.reduce((acc, r) => acc + (Number(r.tarifa) || 0), 0);
+    const counts = { pendiente: 0, 'en-ruta': 0, entregado: 0, 'no-entregado': 0 };
+    state.rows.forEach(r => { counts[r.estado] = (counts[r.estado] || 0) + 1; });
+    const pct = total ? Math.round((counts.entregado / total) * 100) : 0;
+
+    $('statTotalDespachos').textContent = total;
+    $('statTotalTarifa').textContent = formatMoney(totalTarifa);
+    $('statTarifaProm').textContent = formatMoney(total ? totalTarifa / total : 0);
+    $('statCumplimiento').textContent = pct + '%';
+
+    renderBarChart($('chartEstado'), [
+      { label: 'Pendiente', value: counts.pendiente, color: ESTADO_COLORS.pendiente },
+      { label: 'En ruta', value: counts['en-ruta'], color: ESTADO_COLORS['en-ruta'] },
+      { label: 'Entregado', value: counts.entregado, color: ESTADO_COLORS.entregado },
+      { label: 'No entregado', value: counts['no-entregado'], color: ESTADO_COLORS['no-entregado'] }
+    ]);
+
+    const comunaMap = {};
+    state.rows.forEach(r => {
+      const key = (r.comuna || '').trim();
+      if(!key) return;
+      comunaMap[key] = (comunaMap[key] || 0) + 1;
+    });
+    const comunaItems = Object.entries(comunaMap)
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, value]) => ({ label, value }));
+    renderBarChart($('chartComuna'), comunaItems);
+
+    const tarifaItems = rows
+      .filter(r => Number(r.tarifa) > 0)
+      .sort((a, b) => (Number(b.tarifa) || 0) - (Number(a.tarifa) || 0))
+      .slice(0, 10)
+      .map(r => ({ label: r.cliente || r.direccion || '(sin nombre)', value: Number(r.tarifa) }));
+    $('chartTarifaNote').textContent = tarifaItems.length === 10 ? 'Se muestran los 10 despachos con mayor tarifa.' : '';
+    renderBarChart($('chartTarifa'), tarifaItems, { formatValue: formatMoney });
   }
 
   function makeCell(cls, text){
@@ -830,6 +1129,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     select.addEventListener('change', () => {
       row.estado = select.value;
       select.className = 'estado ' + (ESTADOS.find(e => e.value === select.value) || ESTADOS[0]).cls;
+      updateKpis();
+      updateMap();
       commit();
     });
     td.appendChild(select);
@@ -1101,6 +1402,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       const email = user.email || '';
       $('sessionEmail').textContent = email;
       $('avatarInitial').textContent = email ? email[0].toUpperCase() : '?';
+      $('avatarInitial').title = email;
       firebaseReady = true;
 
       if(map) map.invalidateSize();
