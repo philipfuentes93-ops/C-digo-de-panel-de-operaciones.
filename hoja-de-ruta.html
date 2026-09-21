@@ -665,9 +665,13 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   function initMap(){
     if(map || typeof L === 'undefined') return;
     map = L.map('mapView', { scrollWheelZoom: true }).setView([-33.4489, -70.6693], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    // Tiles de CARTO (gratis, sin API key, datos de OpenStreetMap): los tiles
+    // oficiales de tile.openstreetmap.org bloquean el acceso cuando la página
+    // se abre como archivo local (sin un Referer de sitio web válido).
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 20,
+      subdomains: 'abcd',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
     }).addTo(map);
     markersLayer = L.layerGroup().addTo(map);
   }
