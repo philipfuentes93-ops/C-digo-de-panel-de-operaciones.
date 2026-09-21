@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hoja de Ruta — Despachos</title>
+<style>
+  :root{
+    --navy:#1b2540;
+    --blue:#3d63e6;
+    --blue-dark:#2f4fc4;
+    --border:#d7deee;
+    --bg:#eef1f8;
+    --panel:#ffffff;
+    --text:#1b2540;
+    --muted:#6b7590;
+    --ok:#1f9d55;
+    --ok-bg:#e3f7ea;
+    --warn:#b8860b;
+    --warn-bg:#fbf1d8;
+    --pend:#6b7590;
+    --pend-bg:#eceef4;
+    --bad:#d33f3f;
+    --bad-bg:#fde8e8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:24px;
+  }
+  .sheet{
+    max-width:1400px;
+    margin:0 auto;
+    background:var(--panel);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 8px 30px rgba(27,37,64,0.12);
+  }
+  header.title-bar{
+    background:var(--navy);
+    color:#fff;
+    padding:22px 28px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  header.title-bar .icon{ font-size:28px; }
+  header.title-bar h1{
+    font-size:22px;
+    margin:0;
+    letter-spacing:0.3px;
+    outline:none;
+    flex:1;
+  }
+  header.title-bar h1[contenteditable]:hover,
+  header.title-bar h1[contenteditable]:focus{
+    background:rgba(255,255,255,0.08);
+    border-radius:6px;
+    padding:2px 8px;
+    margin:-2px -8px;
+  }
+  .meta-bar{
+    padding:14px 28px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:24px;
+    align-items:center;
+    border-bottom:1px solid var(--border);
+    font-size:14px;
+    color:var(--blue-dark);
+    font-weight:600;
+  }
+  .meta-item{ display:flex; align-items:center; gap:6px; }
+  .meta-item span.pin{ font-size:15px; }
+  .meta-item [contenteditable]{
+    outline:none;
+    border-bottom:1px dashed transparent;
+  }
+  .meta-item [contenteditable]:hover,
+  .meta-item [contenteditable]:focus{
+    border-bottom:1px dashed var(--blue);
+  }
+  .meta-item.fecha{ color:var(--muted); font-weight:500; }
+  .toolbar{
+    padding:12px 28px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    border-bottom:1px solid var(--border);
+    background:#f7f8fc;
+  }
+  button{
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    border:1px solid var(--border);
+    background:#fff;
+    color:var(--navy);
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:background .15s, transform .05s;
+  }
+  button:hover{ background:#eef1fb; }
+  button:active{ transform:translateY(1px); }
+  button.primary{ background:var(--blue); border-color:var(--blue); color:#fff; }
+  button.primary:hover{ background:var(--blue-dark); }
+  button.danger{ color:var(--bad); }
+  button.danger:hover{ background:var(--bad-bg); }
+  .spacer{ flex:1; }
+  .table-wrap{
+    overflow-x:auto;
+    padding:0 0 8px;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:1100px;
+  }
+  thead th{
+    background:var(--blue);
+    color:#fff;
+    font-size:13px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.3px;
+    padding:12px 10px;
+    text-align:left;
+    white-space:nowrap;
+    position:sticky;
+    top:0;
+  }
+  thead th.col-num{ width:46px; text-align:center; }
+  thead th.col-actions{ width:70px; }
+  tbody td{
+    border-bottom:1px solid var(--border);
+    padding:8px 10px;
+    font-size:13.5px;
+    vertical-align:top;
+  }
+  tbody tr:nth-child(even){ background:#fafbfe; }
+  tbody tr:hover{ background:#f1f4fd; }
+  td[contenteditable]{
+    outline:none;
+    min-width:90px;
+    border-radius:5px;
+  }
+  td[contenteditable]:focus{
+    background:#fff;
+    box-shadow:0 0 0 2px var(--blue) inset;
+  }
+  td.col-num{
+    text-align:center;
+    font-weight:700;
+    color:var(--muted);
+  }
+  td.col-actions{
+    text-align:center;
+    white-space:nowrap;
+  }
+  .icon-btn{
+    border:none;
+    background:transparent;
+    color:var(--muted);
+    padding:4px 6px;
+    font-size:15px;
+    border-radius:6px;
+  }
+  .icon-btn:hover{ background:#e6e9f4; color:var(--bad); }
+  select.estado{
+    border:none;
+    border-radius:20px;
+    padding:5px 10px;
+    font-size:12.5px;
+    font-weight:700;
+    cursor:pointer;
+    appearance:none;
+    -webkit-appearance:none;
+    text-align:center;
+    width:100%;
+  }
+  select.estado.pendiente{ background:var(--pend-bg); color:var(--pend); }
+  select.estado.en-ruta{ background:var(--warn-bg); color:var(--warn); }
+  select.estado.entregado{ background:var(--ok-bg); color:var(--ok); }
+  select.estado.no-entregado{ background:var(--bad-bg); color:var(--bad); }
+  input.hora{
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:5px 6px;
+    font-size:13px;
+    width:100px;
+  }
+  input.tarifa{
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:5px 6px;
+    font-size:13px;
+    width:90px;
+    text-align:right;
+  }
+  input.prueba{
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:5px 6px;
+    font-size:12.5px;
+    width:130px;
+  }
+  tfoot td{
+    padding:14px 10px;
+    font-weight:700;
+    border-top:2px solid var(--navy);
+    background:#f7f8fc;
+  }
+  .footer-note{
+    padding:14px 28px 22px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .save-indicator{
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .save-indicator .dot{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--ok);
+  }
+
+  @media print{
+    body{ background:#fff; padding:0; }
+    .toolbar, .icon-btn, .col-actions{ display:none !important; }
+    .sheet{ box-shadow:none; border-radius:0; }
+    thead th{ position:static; }
+  }
+
+  @media (max-width:720px){
+    body{ padding:10px; }
+    header.title-bar{ padding:16px; }
+    header.title-bar h1{ font-size:17px; }
+    .meta-bar, .toolbar, .footer-note{ padding-left:16px; padding-right:16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+  <header class="title-bar">
+    <span class="icon">🚚</span>
+    <h1 id="titulo" contenteditable="true" spellcheck="false">HOJA DE RUTA — Despachos PACS</h1>
+  </header>
+
+  <div class="meta-bar">
+    <div class="meta-item">
+      <span class="pin">📍</span>
+      <span>Punto de partida:</span>
+      <span id="puntoPartida" contenteditable="true" spellcheck="false">Av. Presidente Kennedy 5757, piso -3</span>
+    </div>
+    <div class="meta-item fecha">
+      <span>Fecha de ruta:</span>
+      <input type="date" id="fechaRuta">
+    </div>
+    <div class="meta-item fecha">
+      <span>Transportista:</span>
+      <span id="transportista" contenteditable="true" spellcheck="false" style="border-bottom:1px dashed var(--muted);">— nombre —</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="primary" id="btnAddRow">➕ Agregar despacho</button>
+    <button id="btnImport">📥 Importar JSON</button>
+    <button id="btnExport">📤 Exportar JSON</button>
+    <button id="btnCSV">📊 Exportar CSV</button>
+    <button id="btnPrint">🖨️ Imprimir / PDF</button>
+    <span class="spacer"></span>
+    <span class="save-indicator"><span class="dot"></span> <span id="saveMsg">Guardado automático activo</span></span>
+    <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="tabla">
+      <thead>
+        <tr>
+          <th class="col-num">N°</th>
+          <th>Cliente</th>
+          <th>Dirección</th>
+          <th>Comuna</th>
+          <th>Contacto</th>
+          <th>Productos</th>
+          <th>Estado</th>
+          <th>Hora est.</th>
+          <th>Prueba de Entrega</th>
+          <th>Tarifa</th>
+          <th class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="9" style="text-align:right;">Total tarifa</td>
+          <td id="totalTarifa">$0</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="footer-note">
+    Los datos se guardan automáticamente en este navegador. Para compartirlos con el transportista o llevarlos a otro equipo, usá <strong>Exportar JSON</strong> (para reimportar más tarde) o <strong>Exportar CSV</strong> (para abrir en Excel/Sheets).
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="application/json" style="display:none;">
+
+<script>
+(function(){
+  const STORAGE_KEY = 'hojaDeRuta_v1';
+  const tbody = document.getElementById('tbody');
+  const totalTarifaEl = document.getElementById('totalTarifa');
+  const titulo = document.getElementById('titulo');
+  const puntoPartida = document.getElementById('puntoPartida');
+  const transportista = document.getElementById('transportista');
+  const fechaRuta = document.getElementById('fechaRuta');
+
+  const ESTADOS = [
+    { value: 'pendiente', label: 'Pendiente', cls: 'pendiente' },
+    { value: 'en-ruta', label: 'En ruta', cls: 'en-ruta' },
+    { value: 'entregado', label: 'Entregado', cls: 'entregado' },
+    { value: 'no-entregado', label: 'No entregado', cls: 'no-entregado' }
+  ];
+
+  function uid(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  function defaultRow(){
+    return { id: uid(), cliente:'', direccion:'', comuna:'', contacto:'', productos:'', estado:'pendiente', hora:'', prueba:'', tarifa:'' };
+  }
+
+  function defaultState(){
+    return {
+      titulo: 'HOJA DE RUTA — Despachos PACS',
+      puntoPartida: 'Av. Presidente Kennedy 5757, piso -3',
+      transportista: '— nombre —',
+      fecha: '',
+      rows: [defaultRow(), defaultRow(), defaultRow()]
+    };
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      if(!parsed.rows || !parsed.rows.length) parsed.rows = [defaultRow()];
+      return parsed;
+    }catch(e){
+      return defaultState();
+    }
+  }
+
+  let state = loadState();
+
+  function saveState(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){ /* almacenamiento no disponible */ }
+  }
+
+  function formatMoney(n){
+    const num = Number(n) || 0;
+    return '$' + num.toLocaleString('es-CL');
+  }
+
+  function recalcTotal(){
+    const total = state.rows.reduce((acc, r) => acc + (Number(r.tarifa) || 0), 0);
+    totalTarifaEl.textContent = formatMoney(total);
+  }
+
+  function renderRows(){
+    tbody.innerHTML = '';
+    state.rows.forEach((row, idx) => {
+      const tr = document.createElement('tr');
+      tr.dataset.id = row.id;
+
+      tr.appendChild(makeCell('col-num', String(idx + 1)));
+      tr.appendChild(makeEditableCell(row, 'cliente'));
+      tr.appendChild(makeEditableCell(row, 'direccion'));
+      tr.appendChild(makeEditableCell(row, 'comuna'));
+      tr.appendChild(makeEditableCell(row, 'contacto'));
+      tr.appendChild(makeEditableCell(row, 'productos'));
+      tr.appendChild(makeEstadoCell(row));
+      tr.appendChild(makeHoraCell(row));
+      tr.appendChild(makePruebaCell(row));
+      tr.appendChild(makeTarifaCell(row));
+      tr.appendChild(makeActionsCell(row));
+
+      tbody.appendChild(tr);
+    });
+    recalcTotal();
+  }
+
+  function makeCell(cls, text){
+    const td = document.createElement('td');
+    if(cls) td.className = cls;
+    td.textContent = text;
+    return td;
+  }
+
+  function makeEditableCell(row, field){
+    const td = document.createElement('td');
+    td.contentEditable = 'true';
+    td.spellcheck = false;
+    td.textContent = row[field] || '';
+    td.addEventListener('input', () => {
+      row[field] = td.textContent;
+      saveState();
+    });
+    return td;
+  }
+
+  function makeEstadoCell(row){
+    const td = document.createElement('td');
+    const select = document.createElement('select');
+    select.className = 'estado ' + (ESTADOS.find(e => e.value === row.estado) || ESTADOS[0]).cls;
+    ESTADOS.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.value;
+      opt.textContent = e.label;
+      if(row.estado === e.value) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', () => {
+      row.estado = select.value;
+      select.className = 'estado ' + (ESTADOS.find(e => e.value === select.value) || ESTADOS[0]).cls;
+      saveState();
+    });
+    td.appendChild(select);
+    return td;
+  }
+
+  function makeHoraCell(row){
+    const td = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'time';
+    input.className = 'hora';
+    input.value = row.hora || '';
+    input.addEventListener('input', () => { row.hora = input.value; saveState(); });
+    td.appendChild(input);
+    return td;
+  }
+
+  function makePruebaCell(row){
+    const td = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'prueba';
+    input.placeholder = 'Link / nota';
+    input.value = row.prueba || '';
+    input.addEventListener('input', () => { row.prueba = input.value; saveState(); });
+    td.appendChild(input);
+    return td;
+  }
+
+  function makeTarifaCell(row){
+    const td = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'tarifa';
+    input.placeholder = '0';
+    input.value = row.tarifa || '';
+    input.addEventListener('input', () => {
+      row.tarifa = input.value;
+      recalcTotal();
+      saveState();
+    });
+    td.appendChild(input);
+    return td;
+  }
+
+  function makeActionsCell(row){
+    const td = document.createElement('td');
+    td.className = 'col-actions';
+
+    const dup = document.createElement('button');
+    dup.className = 'icon-btn';
+    dup.title = 'Duplicar fila';
+    dup.textContent = '⧉';
+    dup.addEventListener('click', () => {
+      const idx = state.rows.findIndex(r => r.id === row.id);
+      const copy = Object.assign({}, row, { id: uid() });
+      state.rows.splice(idx + 1, 0, copy);
+      saveState();
+      renderRows();
+    });
+
+    const del = document.createElement('button');
+    del.className = 'icon-btn';
+    del.title = 'Eliminar fila';
+    del.textContent = '✕';
+    del.addEventListener('click', () => {
+      if(state.rows.length === 1){
+        state.rows = [defaultRow()];
+      } else {
+        state.rows = state.rows.filter(r => r.id !== row.id);
+      }
+      saveState();
+      renderRows();
+    });
+
+    td.appendChild(dup);
+    td.appendChild(del);
+    return td;
+  }
+
+  function bindHeaderFields(){
+    titulo.textContent = state.titulo;
+    puntoPartida.textContent = state.puntoPartida;
+    transportista.textContent = state.transportista;
+    fechaRuta.value = state.fecha || '';
+
+    titulo.addEventListener('input', () => { state.titulo = titulo.textContent; saveState(); });
+    puntoPartida.addEventListener('input', () => { state.puntoPartida = puntoPartida.textContent; saveState(); });
+    transportista.addEventListener('input', () => { state.transportista = transportista.textContent; saveState(); });
+    fechaRuta.addEventListener('input', () => { state.fecha = fechaRuta.value; saveState(); });
+  }
+
+  document.getElementById('btnAddRow').addEventListener('click', () => {
+    state.rows.push(defaultRow());
+    saveState();
+    renderRows();
+  });
+
+  document.getElementById('btnClear').addEventListener('click', () => {
+    if(confirm('¿Vaciar toda la hoja de ruta? Esta acción no se puede deshacer.')){
+      state = defaultState();
+      saveState();
+      bindHeaderFields();
+      renderRows();
+    }
+  });
+
+  document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+  document.getElementById('btnExport').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const fecha = state.fecha || new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `hoja-de-ruta-${fecha}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btnCSV').addEventListener('click', () => {
+    const headers = ['N°','Cliente','Dirección','Comuna','Contacto','Productos','Estado','Hora est.','Prueba de Entrega','Tarifa'];
+    const estadoLabel = v => (ESTADOS.find(e => e.value === v) || {}).label || v;
+    const escape = v => `"${String(v || '').replace(/"/g, '""')}"`;
+    const lines = [headers.map(escape).join(',')];
+    state.rows.forEach((r, idx) => {
+      lines.push([
+        idx + 1, r.cliente, r.direccion, r.comuna, r.contacto, r.productos,
+        estadoLabel(r.estado), r.hora, r.prueba, r.tarifa
+      ].map(escape).join(','));
+    });
+    const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const fecha = state.fecha || new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `hoja-de-ruta-${fecha}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  const fileInput = document.getElementById('fileInput');
+  document.getElementById('btnImport').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (ev) => {
+    const file = ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        if(!parsed.rows) throw new Error('Formato inválido');
+        state = parsed;
+        saveState();
+        bindHeaderFields();
+        renderRows();
+      }catch(e){
+        alert('No se pudo importar el archivo: formato inválido.');
+      }
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
+  });
+
+  bindHeaderFields();
+  renderRows();
+})();
+</script>
+
+</body>
+</html>
