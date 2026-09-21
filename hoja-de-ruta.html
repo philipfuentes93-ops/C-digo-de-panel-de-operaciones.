@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script>
 /* ============================================================
    CONFIGURACIÓN FIREBASE (mismo proyecto que el Panel de Operaciones)
@@ -474,6 +475,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-size:12.5px;
     width:130px;
   }
+  .prueba-links{ display:flex; flex-direction:column; gap:3px; font-size:12px; }
+  .prueba-links a{ color:var(--accent); font-weight:700; text-decoration:none; }
+  .prueba-links a:hover{ text-decoration:underline; }
+  .prueba-recibio{ color:var(--muted); font-size:11.5px; }
   tfoot td{
     padding:14px 12px;
     font-weight:700;
@@ -516,6 +521,120 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .chart-holder{ overflow-x:auto; }
   .chart-empty{ font-size:13px; color:var(--muted); padding:20px 0; margin:0; }
 
+  /* ---------- Módulo Chofer / Entregas ---------- */
+  .chofer-divider{
+    margin:22px 2px 10px;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:var(--muted);
+    font-weight:700;
+  }
+  .chofer-card{
+    padding:16px 18px;
+    margin-bottom:12px;
+  }
+  .chofer-card-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .chofer-card-info{ display:flex; align-items:flex-start; gap:10px; }
+  .chofer-num{
+    width:26px; height:26px;
+    border-radius:50%;
+    background:var(--bg);
+    color:var(--muted);
+    font-size:12px;
+    font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    flex:none;
+  }
+  .chofer-cliente{ font-weight:700; font-size:14.5px; color:var(--text); }
+  .chofer-direccion{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .estado-pill{
+    display:inline-flex;
+    align-items:center;
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+    flex:none;
+  }
+  .estado-pill.pendiente{ background:var(--pend-bg); color:var(--pend); }
+  .estado-pill.en-ruta{ background:var(--warn-bg); color:var(--warn); }
+  .estado-pill.entregado{ background:var(--ok-bg); color:var(--ok); }
+  .estado-pill.no-entregado{ background:var(--bad-bg); color:var(--bad); }
+  .chofer-card-meta{
+    font-size:12.5px;
+    color:var(--muted);
+    margin:8px 0 0;
+    padding-left:36px;
+  }
+  .chofer-card-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:12px;
+    padding-left:36px;
+  }
+  .chofer-card-actions button{ font-size:12.5px; padding:7px 12px; }
+  .chofer-form{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .chofer-field{ display:flex; flex-direction:column; gap:5px; }
+  .chofer-field label{ font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.3px; }
+  .chofer-field input[type="text"], .chofer-field input[type="time"]{
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:9px 11px;
+    font-size:14px;
+    font-family:inherit;
+    max-width:320px;
+  }
+  .signature-wrap{
+    border:1px dashed var(--border);
+    border-radius:10px;
+    background:#fafafe;
+    touch-action:none;
+    max-width:420px;
+  }
+  .signature-wrap canvas{ display:block; width:100%; height:150px; cursor:crosshair; }
+  .photo-preview{
+    max-width:160px;
+    max-height:160px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    display:block;
+  }
+  .chofer-form-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .chofer-summary{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .chofer-summary .thumbs{ display:flex; gap:10px; flex-wrap:wrap; }
+  .chofer-summary img{
+    width:88px; height:88px;
+    object-fit:cover;
+    border-radius:8px;
+    border:1px solid var(--border);
+  }
+  .chofer-summary .details{ font-size:12.5px; color:var(--muted); line-height:1.7; }
+  .chofer-summary .details b{ color:var(--text); }
+  .uploading-msg{ font-size:12px; color:var(--muted); }
+
   @media print{
     body{ background:#fff; }
     .toolbar, .icon-btn, .col-actions, .sync-banner, .sidebar, .map-hero, .kpi-bar{ display:none !important; }
@@ -556,6 +675,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     </div>
     <nav class="sidebar-nav">
       <div class="nav-item active" id="navDespachos" title="Despachos"><span class="nav-icon">📦</span><span class="nav-label">Despachos</span></div>
+      <div class="nav-item" id="navChofer" title="Entregas (chofer)"><span class="nav-icon">🖊️</span><span class="nav-label">Entregas</span></div>
       <div class="nav-item" id="navReportes" title="Reportes"><span class="nav-icon">📊</span><span class="nav-label">Reportes</span></div>
     </nav>
     <div class="sidebar-spacer"></div>
@@ -673,6 +793,14 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     <p class="footer-note">
       Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. El mapa ubica cada dirección automáticamente con OpenStreetMap (gratis, sin clave) — puede tardar unos segundos por despacho. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
     </p>
+  </div>
+
+  <div id="viewChofer" hidden>
+    <div class="content-header">
+      <h1>Entregas</h1>
+      <p>Registrá quién recibió cada despacho, con foto y firma como comprobante.</p>
+    </div>
+    <div id="choferList"></div>
   </div>
 
   <div id="viewReportes" hidden>
@@ -942,6 +1070,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     updateMap();
     geocodeAllPending();
     if(currentView === 'reportes') renderReportes();
+    if(currentView === 'chofer') renderChofer();
   }
 
   function updateKpis(){
@@ -972,14 +1101,17 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
   function switchView(view){
     currentView = view;
-    const isDespachos = view === 'despachos';
-    $('viewDespachos').hidden = !isDespachos;
-    $('viewReportes').hidden = isDespachos;
-    $('navDespachos').classList.toggle('active', isDespachos);
-    $('navReportes').classList.toggle('active', !isDespachos);
-    if(!isDespachos) renderReportes();
+    $('viewDespachos').hidden = view !== 'despachos';
+    $('viewChofer').hidden = view !== 'chofer';
+    $('viewReportes').hidden = view !== 'reportes';
+    $('navDespachos').classList.toggle('active', view === 'despachos');
+    $('navChofer').classList.toggle('active', view === 'chofer');
+    $('navReportes').classList.toggle('active', view === 'reportes');
+    if(view === 'reportes') renderReportes();
+    if(view === 'chofer') renderChofer();
   }
   $('navDespachos').addEventListener('click', () => switchView('despachos'));
+  $('navChofer').addEventListener('click', () => switchView('chofer'));
   $('navReportes').addEventListener('click', () => switchView('reportes'));
 
   function renderBarChart(container, items, opts){
@@ -1093,6 +1225,358 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     renderBarChart($('chartTarifa'), tarifaItems, { formatValue: formatMoney });
   }
 
+  /* ============================================================
+     MÓDULO CHOFER — prueba de entrega (foto + firma + quién recibió)
+     ============================================================ */
+  function compressImage(file){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAX = 1400;
+        let w = img.width, h = img.height;
+        const r = Math.min(1, MAX / Math.max(w, h));
+        w = Math.round(w * r); h = Math.round(h * r);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        c.toBlob(b => b ? resolve(b) : reject(new Error('No se pudo procesar la imagen')), 'image/jpeg', 0.82);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Archivo no válido')); };
+      img.src = url;
+    });
+  }
+
+  async function uploadBlob(path, blob, contentType){
+    const ref = firebase.storage().ref(path);
+    await ref.put(blob, { contentType });
+    const url = await ref.getDownloadURL();
+    return { url, path };
+  }
+
+  function setupSignaturePad(canvas){
+    const ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#211f3d';
+    let drawing = false, hasInk = false;
+    function pos(e){
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * canvas.width / rect.width,
+        y: (e.clientY - rect.top) * canvas.height / rect.height
+      };
+    }
+    function start(e){ drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
+    function move(e){ if(!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasInk = true; e.preventDefault(); }
+    function end(){ drawing = false; }
+    canvas.addEventListener('pointerdown', start);
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerup', end);
+    canvas.addEventListener('pointerleave', end);
+    return {
+      clear(){ ctx.clearRect(0, 0, canvas.width, canvas.height); hasInk = false; },
+      isEmpty(){ return !hasInk; }
+    };
+  }
+
+  function renderChofer(){
+    const container = $('choferList');
+    container.innerHTML = '';
+    const pendientes = state.rows.filter(r => r.estado === 'pendiente' || r.estado === 'en-ruta');
+    const resueltos = state.rows.filter(r => r.estado === 'entregado' || r.estado === 'no-entregado');
+
+    if(!pendientes.length && !resueltos.length){
+      container.innerHTML = '<p class="chart-empty">No hay despachos cargados todavía.</p>';
+      return;
+    }
+
+    if(!pendientes.length){
+      const done = document.createElement('p');
+      done.className = 'chart-empty';
+      done.textContent = '🎉 No quedan despachos pendientes.';
+      container.appendChild(done);
+    } else {
+      pendientes.forEach(row => container.appendChild(makeChoferCard(row)));
+    }
+
+    if(resueltos.length){
+      const divider = document.createElement('div');
+      divider.className = 'chofer-divider';
+      divider.textContent = 'Ya resueltos';
+      container.appendChild(divider);
+      resueltos.forEach(row => container.appendChild(makeChoferCard(row)));
+    }
+  }
+
+  function makeChoferCard(row){
+    const idx = state.rows.indexOf(row);
+    const card = document.createElement('div');
+    card.className = 'card chofer-card';
+
+    const head = document.createElement('div');
+    head.className = 'chofer-card-head';
+
+    const info = document.createElement('div');
+    info.className = 'chofer-card-info';
+    const num = document.createElement('span');
+    num.className = 'chofer-num';
+    num.textContent = String(idx + 1);
+    const texts = document.createElement('div');
+    const cliente = document.createElement('div');
+    cliente.className = 'chofer-cliente';
+    cliente.textContent = row.cliente || '(sin cliente)';
+    const direccion = document.createElement('div');
+    direccion.className = 'chofer-direccion';
+    direccion.textContent = [row.direccion, row.comuna].filter(Boolean).join(', ') || 'Sin dirección cargada';
+    texts.appendChild(cliente);
+    texts.appendChild(direccion);
+    info.appendChild(num);
+    info.appendChild(texts);
+
+    const estadoInfo = ESTADOS.find(e => e.value === row.estado) || ESTADOS[0];
+    const pill = document.createElement('span');
+    pill.className = 'estado-pill ' + estadoInfo.cls;
+    pill.textContent = estadoInfo.label;
+
+    head.appendChild(info);
+    head.appendChild(pill);
+    card.appendChild(head);
+
+    const meta = document.createElement('div');
+    meta.className = 'chofer-card-meta';
+    const metaParts = [];
+    if(row.contacto) metaParts.push('📞 ' + row.contacto);
+    if(row.productos) metaParts.push('📦 ' + row.productos);
+    if(row.hora) metaParts.push('🕒 hora est. ' + row.hora);
+    meta.textContent = metaParts.join('   ·   ') || 'Sin datos adicionales.';
+    card.appendChild(meta);
+
+    const hasProof = row.entrega && (row.entrega.recibidoPor || row.entrega.fotoUrl || row.entrega.firmaUrl || row.entrega.motivo);
+    card.appendChild(hasProof ? makeChoferSummary(row) : makeChoferActions(row));
+
+    return card;
+  }
+
+  function makeChoferSummary(row){
+    const wrap = document.createElement('div');
+    wrap.className = 'chofer-summary';
+
+    const thumbs = document.createElement('div');
+    thumbs.className = 'thumbs';
+    if(row.entrega.fotoUrl){
+      const a = document.createElement('a');
+      a.href = row.entrega.fotoUrl; a.target = '_blank'; a.rel = 'noopener';
+      const img = document.createElement('img');
+      img.src = row.entrega.fotoUrl; img.alt = 'Foto de entrega';
+      a.appendChild(img);
+      thumbs.appendChild(a);
+    }
+    if(row.entrega.firmaUrl){
+      const a = document.createElement('a');
+      a.href = row.entrega.firmaUrl; a.target = '_blank'; a.rel = 'noopener';
+      const img = document.createElement('img');
+      img.src = row.entrega.firmaUrl; img.alt = 'Firma';
+      img.style.objectFit = 'contain'; img.style.background = '#fff';
+      a.appendChild(img);
+      thumbs.appendChild(a);
+    }
+
+    const details = document.createElement('div');
+    details.className = 'details';
+    const lines = [];
+    if(row.entrega.recibidoPor) lines.push('<b>Recibió:</b> ' + escapeHtml(row.entrega.recibidoPor));
+    if(row.entrega.horaEntrega) lines.push('<b>Hora:</b> ' + escapeHtml(row.entrega.horaEntrega));
+    if(row.entrega.motivo) lines.push('<b>Motivo:</b> ' + escapeHtml(row.entrega.motivo));
+    if(row.entrega.registradoPor) lines.push('<b>Registrado por:</b> ' + escapeHtml(row.entrega.registradoPor));
+    details.innerHTML = lines.join('<br>');
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️ Editar';
+    editBtn.addEventListener('click', () => wrap.replaceWith(makeChoferForm(row)));
+    details.appendChild(document.createElement('br'));
+    details.appendChild(editBtn);
+
+    wrap.appendChild(thumbs);
+    wrap.appendChild(details);
+    return wrap;
+  }
+
+  function makeChoferActions(row){
+    const wrap = document.createElement('div');
+    const actions = document.createElement('div');
+    actions.className = 'chofer-card-actions';
+
+    if(row.estado === 'pendiente'){
+      const btnEnRuta = document.createElement('button');
+      btnEnRuta.textContent = '🚚 Marcar en ruta';
+      btnEnRuta.addEventListener('click', () => {
+        row.estado = 'en-ruta';
+        renderRows();
+        commit();
+      });
+      actions.appendChild(btnEnRuta);
+    }
+
+    const btnRegistrar = document.createElement('button');
+    btnRegistrar.className = 'primary';
+    btnRegistrar.textContent = '📋 Registrar entrega';
+    btnRegistrar.addEventListener('click', () => wrap.replaceWith(makeChoferForm(row)));
+    actions.appendChild(btnRegistrar);
+
+    wrap.appendChild(actions);
+    return wrap;
+  }
+
+  function makeChoferForm(row){
+    const form = document.createElement('div');
+    form.className = 'chofer-form';
+
+    const fRecibido = document.createElement('div');
+    fRecibido.className = 'chofer-field';
+    const lRecibido = document.createElement('label');
+    lRecibido.textContent = 'Recibió (nombre)';
+    const iRecibido = document.createElement('input');
+    iRecibido.type = 'text';
+    iRecibido.placeholder = 'Nombre de quien recibe';
+    iRecibido.value = (row.entrega && row.entrega.recibidoPor) || '';
+    fRecibido.appendChild(lRecibido);
+    fRecibido.appendChild(iRecibido);
+
+    const fHora = document.createElement('div');
+    fHora.className = 'chofer-field';
+    const lHora = document.createElement('label');
+    lHora.textContent = 'Hora de entrega';
+    const iHora = document.createElement('input');
+    iHora.type = 'time';
+    const now = new Date();
+    iHora.value = (row.entrega && row.entrega.horaEntrega) ||
+      (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
+    fHora.appendChild(lHora);
+    fHora.appendChild(iHora);
+
+    const fFoto = document.createElement('div');
+    fFoto.className = 'chofer-field';
+    const lFoto = document.createElement('label');
+    lFoto.textContent = 'Foto de entrega';
+    const iFoto = document.createElement('input');
+    iFoto.type = 'file';
+    iFoto.accept = 'image/*';
+    iFoto.setAttribute('capture', 'environment');
+    const previewImg = document.createElement('img');
+    previewImg.className = 'photo-preview';
+    previewImg.hidden = true;
+    if(row.entrega && row.entrega.fotoUrl){ previewImg.src = row.entrega.fotoUrl; previewImg.hidden = false; }
+    let selectedFile = null;
+    iFoto.addEventListener('change', () => {
+      const file = iFoto.files[0];
+      if(!file) return;
+      selectedFile = file;
+      previewImg.src = URL.createObjectURL(file);
+      previewImg.hidden = false;
+    });
+    fFoto.appendChild(lFoto);
+    fFoto.appendChild(iFoto);
+    fFoto.appendChild(previewImg);
+
+    const fFirma = document.createElement('div');
+    fFirma.className = 'chofer-field';
+    const lFirma = document.createElement('label');
+    lFirma.textContent = 'Firma';
+    const sigWrap = document.createElement('div');
+    sigWrap.className = 'signature-wrap';
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 180;
+    sigWrap.appendChild(canvas);
+    const pad = setupSignaturePad(canvas);
+    const btnClearSig = document.createElement('button');
+    btnClearSig.type = 'button';
+    btnClearSig.textContent = '🧹 Limpiar firma';
+    btnClearSig.addEventListener('click', () => pad.clear());
+    fFirma.appendChild(lFirma);
+    fFirma.appendChild(sigWrap);
+    fFirma.appendChild(btnClearSig);
+
+    const msg = document.createElement('div');
+    msg.className = 'uploading-msg';
+
+    const btnOk = document.createElement('button');
+    btnOk.className = 'primary';
+    btnOk.textContent = '✅ Confirmar entrega';
+
+    const btnFail = document.createElement('button');
+    btnFail.className = 'danger';
+    btnFail.textContent = '⚠️ No se pudo entregar';
+
+    const btnCancel = document.createElement('button');
+    btnCancel.type = 'button';
+    btnCancel.textContent = 'Cancelar';
+    btnCancel.addEventListener('click', () => renderRows());
+
+    async function submit(outcome){
+      let motivo = (row.entrega && row.entrega.motivo) || '';
+      if(outcome === 'no-entregado'){
+        motivo = prompt('¿Por qué no se pudo entregar?', motivo) || '';
+        if(!motivo.trim()) return;
+      } else if(!iRecibido.value.trim()){
+        alert('Escribí el nombre de quien recibió el despacho.');
+        return;
+      }
+      btnOk.disabled = true; btnFail.disabled = true; btnCancel.disabled = true;
+      msg.textContent = 'Guardando…';
+      try{
+        const entrega = Object.assign({}, row.entrega || {});
+        entrega.recibidoPor = iRecibido.value.trim();
+        entrega.horaEntrega = iHora.value;
+        entrega.motivo = outcome === 'no-entregado' ? motivo.trim() : '';
+        entrega.registradoPor = (auth && auth.currentUser && auth.currentUser.email) || '';
+        entrega.registradoAt = new Date().toISOString();
+
+        if(selectedFile){
+          msg.textContent = 'Subiendo foto…';
+          const blob = await compressImage(selectedFile);
+          const up = await uploadBlob('hojasDeRuta/' + HOJA_ID + '/' + row.id + '/foto-' + Date.now() + '.jpg', blob, 'image/jpeg');
+          entrega.fotoUrl = up.url; entrega.fotoPath = up.path;
+        }
+        if(!pad.isEmpty()){
+          msg.textContent = 'Subiendo firma…';
+          const sigBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+          const up = await uploadBlob('hojasDeRuta/' + HOJA_ID + '/' + row.id + '/firma-' + Date.now() + '.png', sigBlob, 'image/png');
+          entrega.firmaUrl = up.url; entrega.firmaPath = up.path;
+        }
+
+        row.entrega = entrega;
+        row.estado = outcome;
+        renderRows();
+        commit();
+      }catch(err){
+        console.error(err);
+        msg.textContent = '';
+        btnOk.disabled = false; btnFail.disabled = false; btnCancel.disabled = false;
+        alert('No se pudo guardar: ' + err.message);
+      }
+    }
+
+    btnOk.addEventListener('click', () => submit('entregado'));
+    btnFail.addEventListener('click', () => submit('no-entregado'));
+
+    const actions = document.createElement('div');
+    actions.className = 'chofer-form-actions';
+    actions.appendChild(btnOk);
+    actions.appendChild(btnFail);
+    actions.appendChild(btnCancel);
+
+    form.appendChild(fRecibido);
+    form.appendChild(fHora);
+    form.appendChild(fFoto);
+    form.appendChild(fFirma);
+    form.appendChild(msg);
+    form.appendChild(actions);
+    return form;
+  }
+
   function makeCell(cls, text){
     const td = document.createElement('td');
     if(cls) td.className = cls;
@@ -1150,6 +1634,30 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
   function makePruebaCell(row){
     const td = document.createElement('td');
+    if(row.entrega && (row.entrega.fotoUrl || row.entrega.firmaUrl)){
+      const wrap = document.createElement('div');
+      wrap.className = 'prueba-links';
+      if(row.entrega.fotoUrl){
+        const a = document.createElement('a');
+        a.href = row.entrega.fotoUrl; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = '📷 Foto';
+        wrap.appendChild(a);
+      }
+      if(row.entrega.firmaUrl){
+        const a = document.createElement('a');
+        a.href = row.entrega.firmaUrl; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = '✍️ Firma';
+        wrap.appendChild(a);
+      }
+      if(row.entrega.recibidoPor){
+        const small = document.createElement('div');
+        small.className = 'prueba-recibio';
+        small.textContent = 'Recibió: ' + row.entrega.recibidoPor;
+        wrap.appendChild(small);
+      }
+      td.appendChild(wrap);
+      return td;
+    }
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'prueba';
