@@ -944,10 +944,11 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     // Tiles públicos de Esri (gratis, sin API key). Se probó primero con
     // tile.openstreetmap.org (bloquea el acceso "tipo app" sin Referer de
     // sitio web) y luego con CARTO (ahora exige API key en su capa gratuita).
-    // Esri World Street Map no requiere clave para este nivel de uso.
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    // World Topo Map (mismo proveedor Esri, sin clave) tiene parques/áreas
+    // verdes y se ve más limpio que World Street Map.
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
-      attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC, &copy; OpenStreetMap contributors, and the GIS User Community'
+      attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, Intermap, increment P Corp., GEBCO, USGS, FAO, NPS, NRCAN, GeoBase, IGN, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), &copy; OpenStreetMap contributors, and the GIS User Community'
     }).addTo(map);
     markersLayer = L.layerGroup().addTo(map);
   }
