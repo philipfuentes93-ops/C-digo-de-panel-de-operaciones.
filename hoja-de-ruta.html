@@ -4,6 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hoja de Ruta — Despachos</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+/* ============================================================
+   CONFIGURACIÓN FIREBASE (mismo proyecto que el Panel de Operaciones)
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCjtIGUWbZMNgD2FU1zc315tt5pN7FLA8E",
+  authDomain: "tablero-de-trabajos.firebaseapp.com",
+  projectId: "tablero-de-trabajos",
+  storageBucket: "tablero-de-trabajos.firebasestorage.app",
+  messagingSenderId: "593838460928",
+  appId: "1:593838460928:web:3638c3a303e693792648e5"
+};
+const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento compartido
+</script>
 <style>
   :root{
     --navy:#1b2540;
@@ -39,6 +56,45 @@
     overflow:hidden;
     box-shadow:0 8px 30px rgba(27,37,64,0.12);
   }
+  .sheet[hidden]{ display:none; }
+
+  /* ---------- Login ---------- */
+  .login-screen{
+    position:fixed;
+    inset:0;
+    background:rgba(15,20,38,0.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .login-box{
+    background:#fff;
+    border-radius:16px;
+    padding:32px 28px;
+    max-width:360px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(15,20,38,0.35);
+  }
+  .login-box .icon{ font-size:34px; }
+  .login-box h2{ margin:8px 0 4px; font-size:20px; color:var(--navy); }
+  .login-box p{ margin:0 0 18px; font-size:13.5px; color:var(--muted); line-height:1.5; }
+  .login-box input{
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:11px 12px;
+    font-size:14px;
+    margin-bottom:10px;
+    font-family:inherit;
+  }
+  .login-box input:focus{ outline:none; border-color:var(--blue); }
+  .login-box .row-btns{ display:flex; gap:8px; margin-top:6px; }
+  .login-box button{ flex:1; }
+  .login-err{ color:var(--bad); font-size:12.5px; margin-top:12px; min-height:16px; }
+
   header.title-bar{
     background:var(--navy);
     color:#fff;
@@ -84,6 +140,38 @@
     border-bottom:1px dashed var(--blue);
   }
   .meta-item.fecha{ color:var(--muted); font-weight:500; }
+  .session-item{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--muted);
+    font-weight:500;
+    font-size:13px;
+  }
+  .session-item button{
+    font-size:12px;
+    padding:5px 10px;
+  }
+  .sync-bar{
+    padding:8px 28px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12.5px;
+    font-weight:600;
+    border-bottom:1px solid var(--border);
+  }
+  .sync-bar .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+  .sync-bar.ok{ background:var(--ok-bg); color:var(--ok); }
+  .sync-bar.ok .dot{ background:var(--ok); }
+  .sync-bar.saving{ background:var(--warn-bg); color:var(--warn); }
+  .sync-bar.saving .dot{ background:var(--warn); animation:pulse 1s infinite; }
+  .sync-bar.err{ background:var(--bad-bg); color:var(--bad); }
+  .sync-bar.err .dot{ background:var(--bad); }
+  .sync-bar.local{ background:var(--pend-bg); color:var(--pend); }
+  .sync-bar.local .dot{ background:var(--pend); }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
   .toolbar{
     padding:12px 28px;
     display:flex;
@@ -222,21 +310,10 @@
     font-size:12px;
     color:var(--muted);
   }
-  .save-indicator{
-    font-size:12px;
-    color:var(--muted);
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .save-indicator .dot{
-    width:8px; height:8px; border-radius:50%;
-    background:var(--ok);
-  }
 
   @media print{
     body{ background:#fff; padding:0; }
-    .toolbar, .icon-btn, .col-actions{ display:none !important; }
+    .toolbar, .icon-btn, .col-actions, .sync-bar, .session-item{ display:none !important; }
     .sheet{ box-shadow:none; border-radius:0; }
     thead th{ position:static; }
   }
@@ -245,13 +322,29 @@
     body{ padding:10px; }
     header.title-bar{ padding:16px; }
     header.title-bar h1{ font-size:17px; }
-    .meta-bar, .toolbar, .footer-note{ padding-left:16px; padding-right:16px; }
+    .meta-bar, .toolbar, .footer-note, .sync-bar{ padding-left:16px; padding-right:16px; }
+    .session-item{ margin-left:0; }
   }
 </style>
 </head>
 <body>
 
-<div class="sheet">
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="icon">🚚</div>
+    <h2>Hoja de Ruta</h2>
+    <p>Ingresá con el correo y la clave que te asignaron para ver y actualizar los despachos.</p>
+    <input id="lEmail" type="email" placeholder="Correo" autocomplete="username">
+    <input id="lPass" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <div class="row-btns">
+      <button class="primary" id="btnLogin">Entrar</button>
+      <button id="btnReset">Olvidé mi clave</button>
+    </div>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" hidden>
   <header class="title-bar">
     <span class="icon">🚚</span>
     <h1 id="titulo" contenteditable="true" spellcheck="false">HOJA DE RUTA — Despachos PACS</h1>
@@ -271,6 +364,15 @@
       <span>Transportista:</span>
       <span id="transportista" contenteditable="true" spellcheck="false" style="border-bottom:1px dashed var(--muted);">— nombre —</span>
     </div>
+    <div class="session-item">
+      <span id="sessionEmail"></span>
+      <button id="btnLogout">Salir</button>
+    </div>
+  </div>
+
+  <div class="sync-bar local" id="syncBar">
+    <span class="dot"></span>
+    <span id="syncMsg">Conectando…</span>
   </div>
 
   <div class="toolbar">
@@ -280,7 +382,6 @@
     <button id="btnCSV">📊 Exportar CSV</button>
     <button id="btnPrint">🖨️ Imprimir / PDF</button>
     <span class="spacer"></span>
-    <span class="save-indicator"><span class="dot"></span> <span id="saveMsg">Guardado automático activo</span></span>
     <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
   </div>
 
@@ -314,7 +415,7 @@
   </div>
 
   <div class="footer-note">
-    Los datos se guardan automáticamente en este navegador. Para compartirlos con el transportista o llevarlos a otro equipo, usá <strong>Exportar JSON</strong> (para reimportar más tarde) o <strong>Exportar CSV</strong> (para abrir en Excel/Sheets).
+    Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
   </div>
 </div>
 
@@ -322,13 +423,14 @@
 
 <script>
 (function(){
+  const $ = id => document.getElementById(id);
   const STORAGE_KEY = 'hojaDeRuta_v1';
-  const tbody = document.getElementById('tbody');
-  const totalTarifaEl = document.getElementById('totalTarifa');
-  const titulo = document.getElementById('titulo');
-  const puntoPartida = document.getElementById('puntoPartida');
-  const transportista = document.getElementById('transportista');
-  const fechaRuta = document.getElementById('fechaRuta');
+  const tbody = $('tbody');
+  const totalTarifaEl = $('totalTarifa');
+  const titulo = $('titulo');
+  const puntoPartida = $('puntoPartida');
+  const transportista = $('transportista');
+  const fechaRuta = $('fechaRuta');
 
   const ESTADOS = [
     { value: 'pendiente', label: 'Pendiente', cls: 'pendiente' },
@@ -353,7 +455,7 @@
     };
   }
 
-  function loadState(){
+  function loadLocalState(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return defaultState();
@@ -365,12 +467,25 @@
     }
   }
 
-  let state = loadState();
+  let state = loadLocalState();
+  let pendingRemote = null;
 
-  function saveState(){
-    try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }catch(e){ /* almacenamiento no disponible */ }
+  function cacheLocal(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ /* no disponible */ }
+  }
+
+  function isEditingNow(){
+    const ae = document.activeElement;
+    if(!ae) return false;
+    if(ae.isContentEditable) return true;
+    const tag = ae.tagName;
+    return tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+  }
+
+  function setSync(cls, msg){
+    const bar = $('syncBar');
+    bar.className = 'sync-bar ' + cls;
+    $('syncMsg').textContent = msg;
   }
 
   function formatMoney(n){
@@ -420,7 +535,7 @@
     td.textContent = row[field] || '';
     td.addEventListener('input', () => {
       row[field] = td.textContent;
-      saveState();
+      commit();
     });
     return td;
   }
@@ -439,7 +554,7 @@
     select.addEventListener('change', () => {
       row.estado = select.value;
       select.className = 'estado ' + (ESTADOS.find(e => e.value === select.value) || ESTADOS[0]).cls;
-      saveState();
+      commit();
     });
     td.appendChild(select);
     return td;
@@ -451,7 +566,7 @@
     input.type = 'time';
     input.className = 'hora';
     input.value = row.hora || '';
-    input.addEventListener('input', () => { row.hora = input.value; saveState(); });
+    input.addEventListener('input', () => { row.hora = input.value; commit(); });
     td.appendChild(input);
     return td;
   }
@@ -463,7 +578,7 @@
     input.className = 'prueba';
     input.placeholder = 'Link / nota';
     input.value = row.prueba || '';
-    input.addEventListener('input', () => { row.prueba = input.value; saveState(); });
+    input.addEventListener('input', () => { row.prueba = input.value; commit(); });
     td.appendChild(input);
     return td;
   }
@@ -478,7 +593,7 @@
     input.addEventListener('input', () => {
       row.tarifa = input.value;
       recalcTotal();
-      saveState();
+      commit();
     });
     td.appendChild(input);
     return td;
@@ -496,7 +611,7 @@
       const idx = state.rows.findIndex(r => r.id === row.id);
       const copy = Object.assign({}, row, { id: uid() });
       state.rows.splice(idx + 1, 0, copy);
-      saveState();
+      commit();
       renderRows();
     });
 
@@ -510,7 +625,7 @@
       } else {
         state.rows = state.rows.filter(r => r.id !== row.id);
       }
-      saveState();
+      commit();
       renderRows();
     });
 
@@ -524,31 +639,31 @@
     puntoPartida.textContent = state.puntoPartida;
     transportista.textContent = state.transportista;
     fechaRuta.value = state.fecha || '';
-
-    titulo.addEventListener('input', () => { state.titulo = titulo.textContent; saveState(); });
-    puntoPartida.addEventListener('input', () => { state.puntoPartida = puntoPartida.textContent; saveState(); });
-    transportista.addEventListener('input', () => { state.transportista = transportista.textContent; saveState(); });
-    fechaRuta.addEventListener('input', () => { state.fecha = fechaRuta.value; saveState(); });
   }
 
-  document.getElementById('btnAddRow').addEventListener('click', () => {
+  titulo.addEventListener('input', () => { state.titulo = titulo.textContent; commit(); });
+  puntoPartida.addEventListener('input', () => { state.puntoPartida = puntoPartida.textContent; commit(); });
+  transportista.addEventListener('input', () => { state.transportista = transportista.textContent; commit(); });
+  fechaRuta.addEventListener('input', () => { state.fecha = fechaRuta.value; commit(); });
+
+  $('btnAddRow').addEventListener('click', () => {
     state.rows.push(defaultRow());
-    saveState();
+    commit();
     renderRows();
   });
 
-  document.getElementById('btnClear').addEventListener('click', () => {
-    if(confirm('¿Vaciar toda la hoja de ruta? Esta acción no se puede deshacer.')){
+  $('btnClear').addEventListener('click', () => {
+    if(confirm('¿Vaciar toda la hoja de ruta para todos? Esta acción no se puede deshacer.')){
       state = defaultState();
-      saveState();
+      commit();
       bindHeaderFields();
       renderRows();
     }
   });
 
-  document.getElementById('btnPrint').addEventListener('click', () => window.print());
+  $('btnPrint').addEventListener('click', () => window.print());
 
-  document.getElementById('btnExport').addEventListener('click', () => {
+  $('btnExport').addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -559,7 +674,7 @@
     URL.revokeObjectURL(url);
   });
 
-  document.getElementById('btnCSV').addEventListener('click', () => {
+  $('btnCSV').addEventListener('click', () => {
     const headers = ['N°','Cliente','Dirección','Comuna','Contacto','Productos','Estado','Hora est.','Prueba de Entrega','Tarifa'];
     const estadoLabel = v => (ESTADOS.find(e => e.value === v) || {}).label || v;
     const escape = v => `"${String(v || '').replace(/"/g, '""')}"`;
@@ -580,8 +695,8 @@
     URL.revokeObjectURL(url);
   });
 
-  const fileInput = document.getElementById('fileInput');
-  document.getElementById('btnImport').addEventListener('click', () => fileInput.click());
+  const fileInput = $('fileInput');
+  $('btnImport').addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (ev) => {
     const file = ev.target.files[0];
     if(!file) return;
@@ -591,7 +706,7 @@
         const parsed = JSON.parse(reader.result);
         if(!parsed.rows) throw new Error('Formato inválido');
         state = parsed;
-        saveState();
+        commit();
         bindHeaderFields();
         renderRows();
       }catch(e){
@@ -602,8 +717,139 @@
     fileInput.value = '';
   });
 
+  document.addEventListener('focusout', () => {
+    setTimeout(() => {
+      if(pendingRemote && !isEditingNow()){
+        state = pendingRemote;
+        pendingRemote = null;
+        if(!state.rows || !state.rows.length) state.rows = [defaultRow()];
+        bindHeaderFields();
+        renderRows();
+        cacheLocal();
+        setSync('ok', 'Sincronizado');
+      }
+    }, 80);
+  });
+
   bindHeaderFields();
   renderRows();
+
+  /* ============================================================
+     LOGIN + SINCRONIZACIÓN EN VIVO (Firebase Auth + Firestore)
+     ============================================================ */
+  let docRef = null, saveTimer = null, firebaseReady = false, auth = null, unsub = null;
+
+  function commit(){
+    cacheLocal();
+    if(firebaseReady && docRef){
+      setSync('saving', 'Guardando…');
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        const who = (auth && auth.currentUser && auth.currentUser.email) || 'alguien';
+        docRef.set({
+          json: JSON.stringify(state),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedBy: who
+        }).then(() => setSync('ok', 'Sincronizado')).catch(err => {
+          console.error(err);
+          setSync('err', 'No se pudo guardar en línea (revisá conexión/reglas de Firestore)');
+        });
+      }, 400);
+    }
+  }
+
+  function loginErrorMessage(e){
+    const m = {
+      'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+      'auth/wrong-password': 'Contraseña incorrecta.',
+      'auth/user-not-found': 'Ese correo no está registrado.',
+      'auth/invalid-email': 'El correo no es válido.',
+      'auth/too-many-requests': 'Demasiados intentos, esperá unos minutos.'
+    };
+    return m[e.code] || ('No se pudo iniciar sesión: ' + e.message);
+  }
+
+  async function doLogin(){
+    $('loginErr').style.color = 'var(--bad)';
+    $('loginErr').textContent = '';
+    const email = $('lEmail').value.trim(), pass = $('lPass').value;
+    if(!email || !pass){ $('loginErr').textContent = 'Escribí tu correo y contraseña.'; return; }
+    try{
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      await auth.signInWithEmailAndPassword(email, pass);
+    }catch(e){
+      $('loginErr').textContent = loginErrorMessage(e);
+    }
+  }
+
+  async function doReset(){
+    const email = $('lEmail').value.trim();
+    if(!email){ $('loginErr').textContent = 'Escribí tu correo y volvé a tocar "Olvidé mi clave".'; return; }
+    try{
+      await auth.sendPasswordResetEmail(email);
+      $('loginErr').style.color = 'var(--ok)';
+      $('loginErr').textContent = 'Te enviamos un correo para cambiar la clave.';
+    }catch(e){
+      $('loginErr').style.color = 'var(--bad)';
+      $('loginErr').textContent = 'No se pudo enviar: ' + e.message;
+    }
+  }
+
+  function startFirebase(){
+    if(typeof firebase === 'undefined'){
+      $('loginErr').textContent = 'No se pudo cargar Firebase (revisá tu conexión).';
+      return;
+    }
+    try{ firebase.initializeApp(firebaseConfig); }catch(e){ /* ya inicializada */ }
+    auth = firebase.auth();
+    const db = firebase.firestore();
+    docRef = db.collection('hojasDeRuta').doc(HOJA_ID);
+
+    $('btnLogin').addEventListener('click', doLogin);
+    $('lPass').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+    $('btnReset').addEventListener('click', doReset);
+    $('btnLogout').addEventListener('click', () => auth.signOut());
+
+    auth.onAuthStateChanged(user => {
+      if(unsub){ unsub(); unsub = null; }
+      firebaseReady = false;
+      if(!user){
+        $('loginScreen').hidden = false;
+        $('sheet').hidden = true;
+        return;
+      }
+      $('loginScreen').hidden = true;
+      $('sheet').hidden = false;
+      $('sessionEmail').textContent = user.email || '';
+      firebaseReady = true;
+
+      unsub = docRef.onSnapshot(snap => {
+        if(snap.exists && snap.data().json){
+          const remote = JSON.parse(snap.data().json);
+          if(!remote.rows || !remote.rows.length) remote.rows = [defaultRow()];
+          if(isEditingNow()){
+            pendingRemote = remote;
+            setSync('saving', 'Hay cambios nuevos — tocá afuera de una celda para verlos');
+            return;
+          }
+          state = remote;
+          bindHeaderFields();
+          renderRows();
+          cacheLocal();
+          const who = snap.data().updatedBy;
+          setSync('ok', who ? ('En vivo · última actualización de ' + who) : 'En vivo');
+        } else {
+          // No existe todavía en Firestore: subimos lo que haya en este dispositivo.
+          commit();
+        }
+      }, err => {
+        console.error(err);
+        setSync('err', 'Sin conexión con Firestore — trabajando en modo local');
+      });
+    });
+  }
+
+  startFirebase();
 })();
 </script>
 
