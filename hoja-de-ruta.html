@@ -941,13 +941,13 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   function initMap(){
     if(map || typeof L === 'undefined') return;
     map = L.map('mapView', { scrollWheelZoom: true }).setView([-33.4489, -70.6693], 11);
-    // Tiles de CARTO (gratis, sin API key, datos de OpenStreetMap): los tiles
-    // oficiales de tile.openstreetmap.org bloquean el acceso cuando la página
-    // se abre como archivo local (sin un Referer de sitio web válido).
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 20,
-      subdomains: 'abcd',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    // Tiles públicos de Esri (gratis, sin API key). Se probó primero con
+    // tile.openstreetmap.org (bloquea el acceso "tipo app" sin Referer de
+    // sitio web) y luego con CARTO (ahora exige API key en su capa gratuita).
+    // Esri World Street Map no requiere clave para este nivel de uso.
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC, &copy; OpenStreetMap contributors, and the GIS User Community'
     }).addTo(map);
     markersLayer = L.layerGroup().addTo(map);
   }
