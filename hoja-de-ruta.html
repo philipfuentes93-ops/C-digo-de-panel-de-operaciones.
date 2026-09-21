@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hoja de Ruta — Despachos</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -295,6 +297,21 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   button.danger:hover{ background:var(--bad-bg); }
   .spacer{ flex:1; }
 
+  .map-card{ padding:14px 16px 16px; margin-bottom:16px; }
+  .map-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .map-head h2{ margin:0; font-size:14px; color:var(--text); }
+  .map-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); font-weight:600; }
+  .map-legend .swatch{ display:inline-flex; align-items:center; gap:5px; }
+  .map-legend .swatch .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+  #mapView{ height:380px; border-radius:10px; overflow:hidden; background:#e9eaf3; }
+
   .table-card{ overflow:hidden; margin-bottom:16px; }
   .table-wrap{ overflow-x:auto; }
   table{
@@ -404,7 +421,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
   @media print{
     body{ background:#fff; }
-    .toolbar, .icon-btn, .col-actions, .sync-banner, .sidebar{ display:none !important; }
+    .toolbar, .icon-btn, .col-actions, .sync-banner, .sidebar, .map-card{ display:none !important; }
     .content{ padding:0; max-width:none; }
     .card{ box-shadow:none; border:none; }
     thead th{ position:static; }
@@ -424,6 +441,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     .sidebar-footer{ border-top:none; padding-top:0; }
     .content{ padding:18px 16px 32px; }
     .summary-card{ gap:14px 24px; }
+    #mapView{ height:260px; }
   }
 </style>
 </head>
@@ -493,6 +511,19 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       </div>
     </section>
 
+    <section class="card map-card">
+      <div class="map-head">
+        <h2>Mapa de despachos</h2>
+        <div class="map-legend">
+          <span class="swatch"><span class="dot" style="background:#71708f"></span> Pendiente</span>
+          <span class="swatch"><span class="dot" style="background:#b8860b"></span> En ruta</span>
+          <span class="swatch"><span class="dot" style="background:#1f9d55"></span> Entregado</span>
+          <span class="swatch"><span class="dot" style="background:#d33f3f"></span> No entregado</span>
+        </div>
+      </div>
+      <div id="mapView"></div>
+    </section>
+
     <div class="toolbar">
       <button class="primary" id="btnAddRow">➕ Agregar despacho</button>
       <button id="btnImport">📥 Importar JSON</button>
@@ -535,7 +566,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     </section>
 
     <p class="footer-note">
-      Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
+      Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. El mapa ubica cada dirección automáticamente con OpenStreetMap (gratis, sin clave) — puede tardar unos segundos por despacho. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
     </p>
   </main>
 </div>
@@ -559,6 +590,11 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     { value: 'entregado', label: 'Entregado', cls: 'entregado' },
     { value: 'no-entregado', label: 'No entregado', cls: 'no-entregado' }
   ];
+  const ESTADO_COLORS = { pendiente:'#71708f', 'en-ruta':'#b8860b', entregado:'#1f9d55', 'no-entregado':'#d33f3f' };
+
+  function escapeHtml(s){
+    return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
 
   function uid(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
@@ -619,6 +655,116 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     totalTarifaEl.textContent = formatMoney(total);
   }
 
+  /* ============================================================
+     MAPA (Leaflet + OpenStreetMap) Y GEOCODIFICACIÓN (Nominatim)
+     ============================================================ */
+  let map = null, markersLayer = null;
+  let geocodeBusy = false;
+  const geocodeQueue = [];
+
+  function initMap(){
+    if(map || typeof L === 'undefined') return;
+    map = L.map('mapView', { scrollWheelZoom: true }).setView([-33.4489, -70.6693], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    markersLayer = L.layerGroup().addTo(map);
+  }
+
+  function updateMap(){
+    if(!map || !markersLayer) return;
+    markersLayer.clearLayers();
+    const bounds = [];
+
+    if(state.startLat != null && state.startLng != null){
+      const startIcon = L.divIcon({ className: 'start-pin', html: '🏁', iconSize: [24,24] });
+      L.marker([state.startLat, state.startLng], { icon: startIcon })
+        .addTo(markersLayer)
+        .bindPopup('<b>Punto de partida</b><br>' + escapeHtml(state.puntoPartida));
+      bounds.push([state.startLat, state.startLng]);
+    }
+
+    state.rows.forEach((row, idx) => {
+      if(row.lat == null || row.lng == null) return;
+      const color = ESTADO_COLORS[row.estado] || ESTADO_COLORS.pendiente;
+      const label = (ESTADOS.find(e => e.value === row.estado) || {}).label || row.estado;
+      L.circleMarker([row.lat, row.lng], {
+        radius: 9, weight: 2, color: '#fff', fillColor: color, fillOpacity: 1
+      })
+        .addTo(markersLayer)
+        .bindPopup(
+          '<b>' + (idx + 1) + '. ' + (escapeHtml(row.cliente) || '(sin cliente)') + '</b><br>' +
+          escapeHtml(row.direccion) + (row.comuna ? ', ' + escapeHtml(row.comuna) : '') + '<br>' +
+          'Estado: ' + escapeHtml(label)
+        );
+      bounds.push([row.lat, row.lng]);
+    });
+
+    if(bounds.length === 1){
+      map.setView(bounds[0], 15);
+    } else if(bounds.length > 1){
+      map.fitBounds(bounds, { padding: [36, 36], maxZoom: 15 });
+    }
+  }
+
+  function runGeocodeQueue(){
+    if(geocodeBusy || !geocodeQueue.length) return;
+    geocodeBusy = true;
+    const job = geocodeQueue.shift();
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=cl&q=' + encodeURIComponent(job.query);
+    fetch(url, { headers: { 'Accept': 'application/json' } })
+      .then(r => r.ok ? r.json() : [])
+      .then(results => {
+        const hit = results && results[0];
+        job.onResult(hit ? { lat: parseFloat(hit.lat), lng: parseFloat(hit.lon) } : null);
+      })
+      .catch(() => job.onResult(null))
+      .finally(() => {
+        geocodeBusy = false;
+        setTimeout(runGeocodeQueue, 1100); // Nominatim: máx. ~1 solicitud/seg
+      });
+  }
+
+  function enqueueGeocode(query, onResult){
+    geocodeQueue.push({ query, onResult });
+    runGeocodeQueue();
+  }
+
+  function geocodeRow(row){
+    if(!row.direccion || !row.direccion.trim()) return;
+    const query = [row.direccion, row.comuna, 'Chile'].filter(Boolean).join(', ');
+    if(row._geoQuery === query && row.lat != null) return;
+    row._geoQuery = query;
+    enqueueGeocode(query, coords => {
+      row.lat = coords ? coords.lat : null;
+      row.lng = coords ? coords.lng : null;
+      updateMap();
+      cacheLocal();
+      commit();
+    });
+  }
+
+  function geocodeStart(){
+    const q = (state.puntoPartida || '').trim();
+    if(!q) return;
+    const query = q + ', Chile';
+    if(state._geoStartQuery === query && state.startLat != null) return;
+    state._geoStartQuery = query;
+    enqueueGeocode(query, coords => {
+      state.startLat = coords ? coords.lat : null;
+      state.startLng = coords ? coords.lng : null;
+      updateMap();
+      cacheLocal();
+      commit();
+    });
+  }
+
+  function geocodeAllPending(){
+    geocodeStart();
+    state.rows.forEach(geocodeRow);
+  }
+
   function renderRows(){
     tbody.innerHTML = '';
     state.rows.forEach((row, idx) => {
@@ -640,6 +786,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       tbody.appendChild(tr);
     });
     recalcTotal();
+    updateMap();
+    geocodeAllPending();
   }
 
   function makeCell(cls, text){
@@ -658,6 +806,9 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       row[field] = td.textContent;
       commit();
     });
+    if(field === 'direccion' || field === 'comuna'){
+      td.addEventListener('blur', () => geocodeRow(row));
+    }
     return td;
   }
 
@@ -764,6 +915,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
   titulo.addEventListener('input', () => { state.titulo = titulo.textContent; commit(); });
   puntoPartida.addEventListener('input', () => { state.puntoPartida = puntoPartida.textContent; commit(); });
+  puntoPartida.addEventListener('blur', () => geocodeStart());
   transportista.addEventListener('input', () => { state.transportista = transportista.textContent; commit(); });
   fechaRuta.addEventListener('input', () => { state.fecha = fechaRuta.value; commit(); });
 
@@ -853,6 +1005,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   });
 
   bindHeaderFields();
+  initMap();
   renderRows();
 
   /* ============================================================
@@ -945,6 +1098,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       $('sessionEmail').textContent = email;
       $('avatarInitial').textContent = email ? email[0].toUpperCase() : '?';
       firebaseReady = true;
+
+      if(map) map.invalidateSize();
+      updateMap();
+      geocodeAllPending();
 
       unsub = docRef.onSnapshot(snap => {
         if(snap.exists && snap.data().json){
