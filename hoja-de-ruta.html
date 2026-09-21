@@ -23,52 +23,47 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 </script>
 <style>
   :root{
-    --navy:#1b2540;
-    --blue:#3d63e6;
-    --blue-dark:#2f4fc4;
-    --border:#d7deee;
-    --bg:#eef1f8;
+    --sidebar:#161532;
+    --sidebar-2:#1f1e42;
+    --sidebar-text:#a9a7c9;
+    --sidebar-text-active:#ffffff;
+    --accent:#5b4fe6;
+    --accent-dark:#4a3fce;
+    --border:#e4e5f1;
+    --bg:#f3f4fa;
     --panel:#ffffff;
-    --text:#1b2540;
-    --muted:#6b7590;
+    --text:#211f3d;
+    --muted:#71708f;
     --ok:#1f9d55;
     --ok-bg:#e3f7ea;
     --warn:#b8860b;
     --warn-bg:#fbf1d8;
-    --pend:#6b7590;
+    --pend:#71708f;
     --pend-bg:#eceef4;
     --bad:#d33f3f;
     --bad-bg:#fde8e8;
   }
   *{box-sizing:border-box;}
+  html,body{ height:100%; }
   body{
     margin:0;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg);
     color:var(--text);
-    padding:24px;
   }
-  .sheet{
-    max-width:1400px;
-    margin:0 auto;
-    background:var(--panel);
-    border-radius:14px;
-    overflow:hidden;
-    box-shadow:0 8px 30px rgba(27,37,64,0.12);
-  }
-  .sheet[hidden]{ display:none; }
 
   /* ---------- Login ---------- */
   .login-screen{
     position:fixed;
     inset:0;
-    background:rgba(15,20,38,0.55);
+    background:linear-gradient(160deg,#161532,#2a2760);
     display:flex;
     align-items:center;
     justify-content:center;
     padding:20px;
     z-index:50;
   }
+  .login-screen[hidden]{ display:none; }
   .login-box{
     background:#fff;
     border-radius:16px;
@@ -76,10 +71,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     max-width:360px;
     width:100%;
     text-align:center;
-    box-shadow:0 20px 50px rgba(15,20,38,0.35);
+    box-shadow:0 20px 50px rgba(10,10,30,0.4);
   }
   .login-box .icon{ font-size:34px; }
-  .login-box h2{ margin:8px 0 4px; font-size:20px; color:var(--navy); }
+  .login-box h2{ margin:8px 0 4px; font-size:20px; color:var(--text); }
   .login-box p{ margin:0 0 18px; font-size:13.5px; color:var(--muted); line-height:1.5; }
   .login-box input{
     width:100%;
@@ -90,95 +85,192 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     margin-bottom:10px;
     font-family:inherit;
   }
-  .login-box input:focus{ outline:none; border-color:var(--blue); }
+  .login-box input:focus{ outline:none; border-color:var(--accent); }
   .login-box .row-btns{ display:flex; gap:8px; margin-top:6px; }
   .login-box button{ flex:1; }
   .login-err{ color:var(--bad); font-size:12.5px; margin-top:12px; min-height:16px; }
 
-  header.title-bar{
-    background:var(--navy);
-    color:#fff;
-    padding:22px 28px;
+  /* ---------- App shell ---------- */
+  .app{
+    display:flex;
+    min-height:100vh;
+  }
+  .app[hidden]{ display:none; }
+
+  .sidebar{
+    width:230px;
+    flex:none;
+    background:var(--sidebar);
+    color:var(--sidebar-text);
+    display:flex;
+    flex-direction:column;
+    padding:20px 14px;
+    gap:22px;
+  }
+  .sidebar-logo{
     display:flex;
     align-items:center;
-    gap:14px;
+    gap:10px;
+    padding:0 6px;
   }
-  header.title-bar .icon{ font-size:28px; }
-  header.title-bar h1{
-    font-size:22px;
-    margin:0;
-    letter-spacing:0.3px;
-    outline:none;
+  .sidebar-logo .badge{
+    width:34px; height:34px;
+    border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),#8b7dff);
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px;
+    flex:none;
+  }
+  .sidebar-logo .name{
+    color:#fff;
+    font-weight:700;
+    font-size:15.5px;
+    letter-spacing:0.2px;
+  }
+  .sidebar-nav{ display:flex; flex-direction:column; gap:2px; }
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    padding:10px 12px;
+    border-radius:9px;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--sidebar-text);
+    cursor:default;
+  }
+  .nav-item .nav-icon{ font-size:15px; width:18px; text-align:center; }
+  .nav-item.active{
+    background:var(--sidebar-2);
+    color:var(--sidebar-text-active);
+    box-shadow:inset 3px 0 0 var(--accent);
+  }
+  .sidebar-spacer{ flex:1; }
+  .sidebar-footer{
+    border-top:1px solid rgba(255,255,255,0.08);
+    padding-top:14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .avatar{
+    width:32px; height:32px;
+    border-radius:50%;
+    background:#fff;
+    color:var(--accent-dark);
+    font-weight:800;
+    font-size:13px;
+    display:flex; align-items:center; justify-content:center;
+    flex:none;
+  }
+  .sidebar-user{ overflow:hidden; }
+  .user-email{
+    font-size:12px;
+    color:#dcdaf3;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:130px;
+  }
+  .link-btn{
+    background:none;
+    border:none;
+    color:#9c99d8;
+    font-size:11.5px;
+    font-weight:700;
+    padding:0;
+    cursor:pointer;
+  }
+  .link-btn:hover{ color:#fff; text-decoration:underline; background:none; }
+
+  .content{
     flex:1;
+    min-width:0;
+    padding:26px 32px 40px;
+    max-width:1300px;
   }
-  header.title-bar h1[contenteditable]:hover,
-  header.title-bar h1[contenteditable]:focus{
-    background:rgba(255,255,255,0.08);
-    border-radius:6px;
-    padding:2px 8px;
-    margin:-2px -8px;
+
+  .sync-banner{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:11px 16px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:20px;
   }
-  .meta-bar{
-    padding:14px 28px;
+  .sync-banner .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+  .sync-banner.ok{ background:var(--ok-bg); color:var(--ok); }
+  .sync-banner.ok .dot{ background:var(--ok); }
+  .sync-banner.saving{ background:var(--warn-bg); color:var(--warn); }
+  .sync-banner.saving .dot{ background:var(--warn); animation:pulse 1s infinite; }
+  .sync-banner.err{ background:var(--bad-bg); color:var(--bad); }
+  .sync-banner.err .dot{ background:var(--bad); }
+  .sync-banner.local{ background:var(--pend-bg); color:var(--pend); }
+  .sync-banner.local .dot{ background:var(--pend); }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+  .content-header{ margin-bottom:18px; }
+  .content-header h1{
+    margin:0 0 4px;
+    font-size:24px;
+    color:var(--text);
+  }
+  .content-header p{
+    margin:0;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+
+  .card{
+    background:var(--panel);
+    border-radius:14px;
+    border:1px solid var(--border);
+    box-shadow:0 2px 10px rgba(30,30,70,0.04);
+  }
+
+  .summary-card{
+    padding:18px 22px;
+    margin-bottom:18px;
     display:flex;
     flex-wrap:wrap;
-    gap:24px;
-    align-items:center;
-    border-bottom:1px solid var(--border);
-    font-size:14px;
-    color:var(--blue-dark);
-    font-weight:600;
+    gap:18px 32px;
   }
-  .meta-item{ display:flex; align-items:center; gap:6px; }
-  .meta-item span.pin{ font-size:15px; }
-  .meta-item [contenteditable]{
+  .field{ display:flex; flex-direction:column; gap:4px; min-width:160px; }
+  .field label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    color:var(--muted);
+    font-weight:700;
+  }
+  .field .value{
+    font-size:14.5px;
+    font-weight:600;
+    color:var(--text);
     outline:none;
     border-bottom:1px dashed transparent;
+    min-width:120px;
   }
-  .meta-item [contenteditable]:hover,
-  .meta-item [contenteditable]:focus{
-    border-bottom:1px dashed var(--blue);
-  }
-  .meta-item.fecha{ color:var(--muted); font-weight:500; }
-  .session-item{
-    margin-left:auto;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    color:var(--muted);
-    font-weight:500;
-    font-size:13px;
-  }
-  .session-item button{
-    font-size:12px;
-    padding:5px 10px;
-  }
-  .sync-bar{
-    padding:8px 28px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size:12.5px;
+  .field .value:hover, .field .value:focus{ border-bottom:1px dashed var(--accent); }
+  .field.grow{ flex:1; min-width:240px; }
+  .field input[type="date"]{
+    border:none;
+    font:inherit;
+    font-size:14.5px;
     font-weight:600;
-    border-bottom:1px solid var(--border);
+    color:var(--text);
+    padding:0;
+    background:transparent;
   }
-  .sync-bar .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
-  .sync-bar.ok{ background:var(--ok-bg); color:var(--ok); }
-  .sync-bar.ok .dot{ background:var(--ok); }
-  .sync-bar.saving{ background:var(--warn-bg); color:var(--warn); }
-  .sync-bar.saving .dot{ background:var(--warn); animation:pulse 1s infinite; }
-  .sync-bar.err{ background:var(--bad-bg); color:var(--bad); }
-  .sync-bar.err .dot{ background:var(--bad); }
-  .sync-bar.local{ background:var(--pend-bg); color:var(--pend); }
-  .sync-bar.local .dot{ background:var(--pend); }
-  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .field input[type="date"]:focus{ outline:none; }
+
   .toolbar{
-    padding:12px 28px;
     display:flex;
     flex-wrap:wrap;
     gap:10px;
-    border-bottom:1px solid var(--border);
-    background:#f7f8fc;
+    margin-bottom:16px;
   }
   button{
     font-family:inherit;
@@ -186,39 +278,38 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-weight:600;
     border:1px solid var(--border);
     background:#fff;
-    color:var(--navy);
-    padding:8px 14px;
-    border-radius:8px;
+    color:var(--text);
+    padding:9px 15px;
+    border-radius:9px;
     cursor:pointer;
     display:inline-flex;
     align-items:center;
     gap:6px;
     transition:background .15s, transform .05s;
   }
-  button:hover{ background:#eef1fb; }
+  button:hover{ background:#f1f1fb; }
   button:active{ transform:translateY(1px); }
-  button.primary{ background:var(--blue); border-color:var(--blue); color:#fff; }
-  button.primary:hover{ background:var(--blue-dark); }
+  button.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.primary:hover{ background:var(--accent-dark); }
   button.danger{ color:var(--bad); }
   button.danger:hover{ background:var(--bad-bg); }
   .spacer{ flex:1; }
-  .table-wrap{
-    overflow-x:auto;
-    padding:0 0 8px;
-  }
+
+  .table-card{ overflow:hidden; margin-bottom:16px; }
+  .table-wrap{ overflow-x:auto; }
   table{
     width:100%;
     border-collapse:collapse;
     min-width:1100px;
   }
   thead th{
-    background:var(--blue);
+    background:var(--sidebar);
     color:#fff;
-    font-size:13px;
+    font-size:12.5px;
     font-weight:700;
     text-transform:uppercase;
     letter-spacing:0.3px;
-    padding:12px 10px;
+    padding:13px 12px;
     text-align:left;
     white-space:nowrap;
     position:sticky;
@@ -228,12 +319,12 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   thead th.col-actions{ width:70px; }
   tbody td{
     border-bottom:1px solid var(--border);
-    padding:8px 10px;
+    padding:9px 12px;
     font-size:13.5px;
     vertical-align:top;
   }
-  tbody tr:nth-child(even){ background:#fafbfe; }
-  tbody tr:hover{ background:#f1f4fd; }
+  tbody tr:nth-child(even){ background:#fafafe; }
+  tbody tr:hover{ background:#f1f0fc; }
   td[contenteditable]{
     outline:none;
     min-width:90px;
@@ -241,7 +332,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   }
   td[contenteditable]:focus{
     background:#fff;
-    box-shadow:0 0 0 2px var(--blue) inset;
+    box-shadow:0 0 0 2px var(--accent) inset;
   }
   td.col-num{
     text-align:center;
@@ -260,7 +351,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-size:15px;
     border-radius:6px;
   }
-  .icon-btn:hover{ background:#e6e9f4; color:var(--bad); }
+  .icon-btn:hover{ background:#e6e6f7; color:var(--bad); }
   select.estado{
     border:none;
     border-radius:20px;
@@ -300,30 +391,39 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     width:130px;
   }
   tfoot td{
-    padding:14px 10px;
+    padding:14px 12px;
     font-weight:700;
-    border-top:2px solid var(--navy);
-    background:#f7f8fc;
+    border-top:2px solid var(--sidebar);
+    background:#f7f7fc;
   }
   .footer-note{
-    padding:14px 28px 22px;
     font-size:12px;
     color:var(--muted);
+    line-height:1.6;
   }
 
   @media print{
-    body{ background:#fff; padding:0; }
-    .toolbar, .icon-btn, .col-actions, .sync-bar, .session-item{ display:none !important; }
-    .sheet{ box-shadow:none; border-radius:0; }
+    body{ background:#fff; }
+    .toolbar, .icon-btn, .col-actions, .sync-banner, .sidebar{ display:none !important; }
+    .content{ padding:0; max-width:none; }
+    .card{ box-shadow:none; border:none; }
     thead th{ position:static; }
   }
 
-  @media (max-width:720px){
-    body{ padding:10px; }
-    header.title-bar{ padding:16px; }
-    header.title-bar h1{ font-size:17px; }
-    .meta-bar, .toolbar, .footer-note, .sync-bar{ padding-left:16px; padding-right:16px; }
-    .session-item{ margin-left:0; }
+  @media (max-width:820px){
+    .app{ flex-direction:column; }
+    .sidebar{
+      width:100%;
+      flex-direction:row;
+      align-items:center;
+      padding:12px 16px;
+      gap:14px;
+    }
+    .sidebar-nav{ display:none; }
+    .sidebar-spacer{ flex:1; }
+    .sidebar-footer{ border-top:none; padding-top:0; }
+    .content{ padding:18px 16px 32px; }
+    .summary-card{ gap:14px 24px; }
   }
 </style>
 </head>
@@ -344,79 +444,100 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   </div>
 </div>
 
-<div class="sheet" id="sheet" hidden>
-  <header class="title-bar">
-    <span class="icon">🚚</span>
-    <h1 id="titulo" contenteditable="true" spellcheck="false">HOJA DE RUTA — Despachos PACS</h1>
-  </header>
-
-  <div class="meta-bar">
-    <div class="meta-item">
-      <span class="pin">📍</span>
-      <span>Punto de partida:</span>
-      <span id="puntoPartida" contenteditable="true" spellcheck="false">Av. Presidente Kennedy 5757, piso -3</span>
+<div class="app" id="sheet" hidden>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="badge">🚚</span>
+      <span class="name">Hoja de Ruta</span>
     </div>
-    <div class="meta-item fecha">
-      <span>Fecha de ruta:</span>
-      <input type="date" id="fechaRuta">
+    <nav class="sidebar-nav">
+      <div class="nav-item active"><span class="nav-icon">📦</span> Despachos</div>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <div class="avatar" id="avatarInitial">?</div>
+      <div class="sidebar-user">
+        <div class="user-email" id="sessionEmail"></div>
+        <button class="link-btn" id="btnLogout">Cerrar sesión</button>
+      </div>
     </div>
-    <div class="meta-item fecha">
-      <span>Transportista:</span>
-      <span id="transportista" contenteditable="true" spellcheck="false" style="border-bottom:1px dashed var(--muted);">— nombre —</span>
+  </aside>
+
+  <main class="content">
+    <div class="sync-banner local" id="syncBar">
+      <span class="dot"></span>
+      <span id="syncMsg">Conectando…</span>
     </div>
-    <div class="session-item">
-      <span id="sessionEmail"></span>
-      <button id="btnLogout">Salir</button>
+
+    <div class="content-header">
+      <h1>Despachos</h1>
+      <p>Coordiná las entregas del día con tu transportista — se actualiza en vivo para los dos.</p>
     </div>
-  </div>
 
-  <div class="sync-bar local" id="syncBar">
-    <span class="dot"></span>
-    <span id="syncMsg">Conectando…</span>
-  </div>
+    <section class="card summary-card">
+      <div class="field grow">
+        <label>Título de la hoja</label>
+        <div class="value" id="titulo" contenteditable="true" spellcheck="false">HOJA DE RUTA — Despachos PACS</div>
+      </div>
+      <div class="field grow">
+        <label>Punto de partida</label>
+        <div class="value" id="puntoPartida" contenteditable="true" spellcheck="false">Av. Presidente Kennedy 5757, piso -3</div>
+      </div>
+      <div class="field">
+        <label>Fecha de ruta</label>
+        <input type="date" id="fechaRuta">
+      </div>
+      <div class="field">
+        <label>Transportista</label>
+        <div class="value" id="transportista" contenteditable="true" spellcheck="false">— nombre —</div>
+      </div>
+    </section>
 
-  <div class="toolbar">
-    <button class="primary" id="btnAddRow">➕ Agregar despacho</button>
-    <button id="btnImport">📥 Importar JSON</button>
-    <button id="btnExport">📤 Exportar JSON</button>
-    <button id="btnCSV">📊 Exportar CSV</button>
-    <button id="btnPrint">🖨️ Imprimir / PDF</button>
-    <span class="spacer"></span>
-    <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
-  </div>
+    <div class="toolbar">
+      <button class="primary" id="btnAddRow">➕ Agregar despacho</button>
+      <button id="btnImport">📥 Importar JSON</button>
+      <button id="btnExport">📤 Exportar JSON</button>
+      <button id="btnCSV">📊 Exportar CSV</button>
+      <button id="btnPrint">🖨️ Imprimir / PDF</button>
+      <span class="spacer"></span>
+      <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
+    </div>
 
-  <div class="table-wrap">
-    <table id="tabla">
-      <thead>
-        <tr>
-          <th class="col-num">N°</th>
-          <th>Cliente</th>
-          <th>Dirección</th>
-          <th>Comuna</th>
-          <th>Contacto</th>
-          <th>Productos</th>
-          <th>Estado</th>
-          <th>Hora est.</th>
-          <th>Prueba de Entrega</th>
-          <th>Tarifa</th>
-          <th class="col-actions">Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="9" style="text-align:right;">Total tarifa</td>
-          <td id="totalTarifa">$0</td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
+    <section class="card table-card">
+      <div class="table-wrap">
+        <table id="tabla">
+          <thead>
+            <tr>
+              <th class="col-num">N°</th>
+              <th>Cliente</th>
+              <th>Dirección</th>
+              <th>Comuna</th>
+              <th>Contacto</th>
+              <th>Productos</th>
+              <th>Estado</th>
+              <th>Hora est.</th>
+              <th>Prueba de Entrega</th>
+              <th>Tarifa</th>
+              <th class="col-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="9" style="text-align:right;">Total tarifa</td>
+              <td id="totalTarifa">$0</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
 
-  <div class="footer-note">
-    Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
-  </div>
+    <p class="footer-note">
+      Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
+    </p>
+  </main>
 </div>
 
 <input type="file" id="fileInput" accept="application/json" style="display:none;">
@@ -484,7 +605,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
   function setSync(cls, msg){
     const bar = $('syncBar');
-    bar.className = 'sync-bar ' + cls;
+    bar.className = 'sync-banner ' + cls;
     $('syncMsg').textContent = msg;
   }
 
@@ -820,7 +941,9 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       }
       $('loginScreen').hidden = true;
       $('sheet').hidden = false;
-      $('sessionEmail').textContent = user.email || '';
+      const email = user.email || '';
+      $('sessionEmail').textContent = email;
+      $('avatarInitial').textContent = email ? email[0].toUpperCase() : '?';
       firebaseReady = true;
 
       unsub = docRef.onSnapshot(snap => {
