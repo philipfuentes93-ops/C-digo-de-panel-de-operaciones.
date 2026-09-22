@@ -579,14 +579,94 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .chart-empty{ font-size:13px; color:var(--muted); padding:20px 0; margin:0; }
 
   /* ---------- Módulo Chofer / Entregas ---------- */
-  .chofer-divider{
-    margin:22px 2px 10px;
-    font-size:12px;
-    text-transform:uppercase;
-    letter-spacing:0.5px;
-    color:var(--muted);
+  .chofer-resueltos-toggle{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    width:100%;
+    margin:22px 0 10px;
+    padding:12px 16px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    font-family:inherit;
+    font-size:13px;
     font-weight:700;
+    color:var(--text);
+    cursor:pointer;
+    text-align:left;
+    transition:background .15s ease;
   }
+  .chofer-resueltos-toggle:hover{ background:var(--bg); }
+  .chofer-resueltos-toggle .chevron{
+    display:inline-block;
+    color:var(--muted);
+    transition:transform .15s ease;
+    flex:none;
+  }
+  .chofer-resueltos-toggle.open .chevron{ transform:rotate(90deg); }
+  .chofer-resueltos-toggle .count-badge{
+    background:var(--pend-bg);
+    color:var(--muted);
+    border-radius:20px;
+    padding:2px 9px;
+    font-size:11.5px;
+    flex:none;
+  }
+  .chofer-resueltos-toggle .sub{
+    margin-left:auto;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:none;
+    letter-spacing:0;
+  }
+  .chofer-resueltos-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .chofer-compact-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    padding:10px 14px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-left:4px solid var(--pend);
+    border-radius:10px;
+    font-family:inherit;
+    cursor:pointer;
+    text-align:left;
+    transition:background .15s ease, box-shadow .15s ease;
+  }
+  .chofer-compact-row:hover{ background:var(--bg); box-shadow:0 2px 8px rgba(30,30,70,0.06); }
+  .chofer-compact-row.entregado{ border-left-color:var(--ok); }
+  .chofer-compact-row.no-entregado{ border-left-color:var(--bad); }
+  .chofer-compact-row .chofer-num{ width:24px; height:24px; font-size:11.5px; }
+  .chofer-compact-texts{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    min-width:0;
+    gap:1px;
+  }
+  .chofer-compact-cliente{ font-weight:700; font-size:13.5px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chofer-compact-detail{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chofer-compact-row .chevron{ color:var(--muted); font-size:12px; flex:none; }
+  .chofer-minimize-btn{
+    background:none;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:5px 10px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    cursor:pointer;
+    flex:none;
+  }
+  .chofer-minimize-btn:hover{ background:var(--bg); }
   .chofer-card{
     padding:16px 18px 18px;
     margin-bottom:14px;
@@ -1478,6 +1558,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
      ============================================================ */
   const ACCENT_HEX = '#5b4fe6';
   let currentView = 'despachos';
+  let resueltosOpen = false;
+  let expandedResueltoIds = new Set();
 
   function switchView(view){
     currentView = view;
@@ -1700,15 +1782,84 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     }
 
     if(resueltos.length){
-      const divider = document.createElement('div');
-      divider.className = 'chofer-divider';
-      divider.textContent = 'Ya resueltos';
-      container.appendChild(divider);
-      resueltos.forEach(row => container.appendChild(makeChoferCard(row)));
+      const entregadosCount = resueltos.filter(r => r.estado === 'entregado').length;
+      const noEntregadosCount = resueltos.length - entregadosCount;
+
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'chofer-resueltos-toggle';
+      toggle.innerHTML =
+        '<span class="chevron">▸</span>' +
+        '<span>Ya resueltos</span>' +
+        '<span class="count-badge">' + resueltos.length + '</span>' +
+        '<span class="sub">' + entregadosCount + ' entregados' + (noEntregadosCount ? ' · ' + noEntregadosCount + ' no entregados' : '') + '</span>';
+      toggle.classList.toggle('open', resueltosOpen);
+      toggle.addEventListener('click', () => {
+        resueltosOpen = !resueltosOpen;
+        renderChofer();
+      });
+      container.appendChild(toggle);
+
+      if(resueltosOpen){
+        const list = document.createElement('div');
+        list.className = 'chofer-resueltos-list';
+        resueltos.forEach(row => {
+          list.appendChild(expandedResueltoIds.has(row.id) ? makeChoferCard(row, true) : makeChoferCompactRow(row));
+        });
+        container.appendChild(list);
+      }
     }
   }
 
-  function makeChoferCard(row){
+  function makeChoferCompactRow(row){
+    const idx = state.rows.indexOf(row);
+    const estadoInfo = ESTADOS.find(e => e.value === row.estado) || ESTADOS[0];
+    const rowEl = document.createElement('button');
+    rowEl.type = 'button';
+    rowEl.className = 'chofer-compact-row ' + estadoInfo.cls;
+
+    const num = document.createElement('span');
+    num.className = 'chofer-num';
+    num.textContent = String(idx + 1);
+
+    const texts = document.createElement('span');
+    texts.className = 'chofer-compact-texts';
+    const cliente = document.createElement('span');
+    cliente.className = 'chofer-compact-cliente';
+    cliente.textContent = row.cliente || '(sin cliente)';
+    texts.appendChild(cliente);
+    if(row.entrega && row.entrega.recibidoPor){
+      const recibio = document.createElement('span');
+      recibio.className = 'chofer-compact-detail';
+      recibio.textContent = 'Recibió ' + row.entrega.recibidoPor + (row.entrega.horaEntrega ? ' · ' + row.entrega.horaEntrega : '');
+      texts.appendChild(recibio);
+    } else if(row.entrega && row.entrega.motivo){
+      const motivo = document.createElement('span');
+      motivo.className = 'chofer-compact-detail';
+      motivo.textContent = row.entrega.motivo;
+      texts.appendChild(motivo);
+    }
+
+    const pill = document.createElement('span');
+    pill.className = 'estado-pill ' + estadoInfo.cls;
+    pill.textContent = estadoInfo.label;
+
+    const chevron = document.createElement('span');
+    chevron.className = 'chevron';
+    chevron.textContent = '▾';
+
+    rowEl.appendChild(num);
+    rowEl.appendChild(texts);
+    rowEl.appendChild(pill);
+    rowEl.appendChild(chevron);
+    rowEl.addEventListener('click', () => {
+      expandedResueltoIds.add(row.id);
+      renderChofer();
+    });
+    return rowEl;
+  }
+
+  function makeChoferCard(row, collapsible){
     const idx = state.rows.indexOf(row);
     const card = document.createElement('div');
     const estadoInfo = ESTADOS.find(e => e.value === row.estado) || ESTADOS[0];
@@ -1740,6 +1891,18 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
     head.appendChild(info);
     head.appendChild(pill);
+    if(collapsible){
+      const minBtn = document.createElement('button');
+      minBtn.type = 'button';
+      minBtn.className = 'chofer-minimize-btn';
+      minBtn.title = 'Minimizar';
+      minBtn.textContent = '▴ Minimizar';
+      minBtn.addEventListener('click', () => {
+        expandedResueltoIds.delete(row.id);
+        renderChofer();
+      });
+      head.appendChild(minBtn);
+    }
     card.appendChild(head);
 
     const metaChips = [];
