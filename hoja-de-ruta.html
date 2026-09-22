@@ -29,6 +29,7 @@ window.initGoogleMapsCallback = function(){
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 /* ============================================================
    CONFIGURACIÓN FIREBASE (mismo proyecto que el Panel de Operaciones)
@@ -959,6 +960,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
     <div class="toolbar">
       <button class="primary" id="btnAddRow">➕ Agregar despacho</button>
+      <button class="primary" id="btnImportExcel">📊 Importar Excel</button>
       <button id="btnImport">📥 Importar JSON</button>
       <button id="btnExport">📤 Exportar JSON</button>
       <button id="btnCSV">📊 Exportar CSV</button>
@@ -966,6 +968,9 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       <span class="spacer"></span>
       <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
     </div>
+    <p class="footer-note" style="margin:-8px 0 14px;">
+      <strong>Importar Excel</strong>: subí un .xlsx con columnas como Cliente, Dirección, Comuna, Contacto, Productos, Hora y Tarifa (los nombres de columna pueden variar un poco, el sistema los reconoce solo).
+    </p>
 
     <section class="card table-card">
       <div class="table-wrap">
@@ -1107,6 +1112,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 </div>
 
 <input type="file" id="fileInput" accept="application/json" style="display:none;">
+<input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
 
 <script>
 (function(){
@@ -2421,6 +2427,102 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     };
     reader.readAsText(file);
     fileInput.value = '';
+  });
+
+  // ---------- Importar Excel (.xlsx/.xls/.csv) ----------
+  const EXCEL_HEADER_ALIASES = {
+    cliente: ['cliente', 'nombre', 'razon social', 'razon', 'empresa'],
+    direccion: ['direccion', 'domicilio', 'calle'],
+    comuna: ['comuna', 'ciudad', 'sector'],
+    contacto: ['contacto', 'telefono', 'fono', 'celular', 'whatsapp'],
+    productos: ['productos', 'producto', 'detalle', 'items', 'articulo', 'descripcion'],
+    hora: ['hora estimada', 'hora est', 'hora'],
+    tarifa: ['tarifa', 'precio', 'valor', 'monto', 'costo flete', 'flete', 'costo'],
+    estado: ['estado']
+  };
+
+  function normalizeHeaderText(text){
+    return String(text || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
+  function fieldForHeader(header){
+    const norm = normalizeHeaderText(header);
+    if(!norm) return null;
+    for(const [field, aliases] of Object.entries(EXCEL_HEADER_ALIASES)){
+      if(aliases.some(alias => norm === alias || norm.includes(alias))) return field;
+    }
+    return null;
+  }
+
+  function parseTarifaValue(value){
+    if(typeof value === 'number') return value;
+    const cleaned = String(value || '').replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? '' : num;
+  }
+
+  function estadoFromText(value){
+    const norm = normalizeHeaderText(value);
+    if(norm.includes('no entreg')) return 'no-entregado';
+    if(norm.includes('en ruta') || norm.includes('en-ruta')) return 'en-ruta';
+    if(norm.includes('entreg')) return 'entregado';
+    return 'pendiente';
+  }
+
+  function rowFromExcelRecord(record){
+    const row = defaultRow();
+    Object.keys(record).forEach(header => {
+      const field = fieldForHeader(header);
+      if(!field) return;
+      const raw = record[header];
+      if(field === 'tarifa') row.tarifa = parseTarifaValue(raw);
+      else if(field === 'estado') row.estado = estadoFromText(raw);
+      else row[field] = String(raw ?? '').trim();
+    });
+    return row;
+  }
+
+  const excelFileInput = $('excelFileInput');
+  $('btnImportExcel').addEventListener('click', () => excelFileInput.click());
+  excelFileInput.addEventListener('change', (ev) => {
+    const file = ev.target.files[0];
+    if(!file) return;
+    if(typeof XLSX === 'undefined'){
+      alert('No se pudo cargar el lector de Excel — revisá tu conexión a internet e intentá de nuevo en unos segundos.');
+      excelFileInput.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = new Uint8Array(reader.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const records = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        const imported = records
+          .map(rowFromExcelRecord)
+          .filter(r => r.cliente || r.direccion);
+
+        if(!imported.length){
+          alert('No se encontraron despachos para importar. Revisá que el Excel tenga columnas como Cliente, Dirección, Comuna, Contacto, Productos, Hora y Tarifa, con datos debajo de esa fila de encabezados.');
+          return;
+        }
+
+        const reemplazar = confirm(
+          `Se encontraron ${imported.length} despacho(s) en el archivo.\n\n` +
+          `Aceptar = reemplazar la lista actual por estos.\n` +
+          `Cancelar = agregarlos al final de la lista actual.`
+        );
+        state.rows = reemplazar ? imported : state.rows.concat(imported);
+        commit();
+        renderRows();
+        alert(`Se importaron ${imported.length} despacho(s) correctamente.`);
+      }catch(e){
+        alert('No se pudo leer el archivo. Asegurate de que sea un Excel (.xlsx) o CSV válido.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    excelFileInput.value = '';
   });
 
   document.addEventListener('focusout', () => {
