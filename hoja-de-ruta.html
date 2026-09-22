@@ -376,6 +376,30 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     gap:10px;
     margin-bottom:16px;
   }
+  .advanced-options{
+    margin:0 0 18px;
+  }
+  .advanced-options summary{
+    font-size:11.5px;
+    color:var(--muted);
+    cursor:pointer;
+    list-style:none;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    user-select:none;
+  }
+  .advanced-options summary::-webkit-details-marker{ display:none; }
+  .advanced-options summary::before{ content:"▸"; font-size:10px; }
+  .advanced-options[open] summary::before{ content:"▾"; }
+  .advanced-options summary:hover{ color:var(--text); }
+  .advanced-options-body{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+  }
+  .advanced-options-body button{ font-size:12px; padding:7px 12px; color:var(--muted); }
   button{
     font-family:inherit;
     font-size:13px;
@@ -961,16 +985,22 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     <div class="toolbar">
       <button class="primary" id="btnAddRow">➕ Agregar despacho</button>
       <button class="primary" id="btnImportExcel">📊 Importar Excel</button>
-      <button id="btnImport">📥 Importar JSON</button>
-      <button id="btnExport">📤 Exportar JSON</button>
-      <button id="btnCSV">📊 Exportar CSV</button>
+      <button id="btnExportExcel">📤 Exportar Excel</button>
       <button id="btnPrint">🖨️ Imprimir / PDF</button>
       <span class="spacer"></span>
       <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
     </div>
-    <p class="footer-note" style="margin:-8px 0 14px;">
-      <strong>Importar Excel</strong>: subí un .xlsx con columnas como Cliente, Dirección, Comuna, Contacto, Productos, Hora y Tarifa (los nombres de columna pueden variar un poco, el sistema los reconoce solo).
+    <p class="footer-note" style="margin:-8px 0 6px;">
+      El Excel debe traer las columnas <strong>Cliente, Dirección, Comuna, Contacto, Productos</strong> y, si querés, <strong>Estado</strong> — son los datos que vos cargás. <strong>Hora estimada</strong> y <strong>Prueba de Entrega</strong> las completa el transportista directamente acá en el panel.
     </p>
+    <details class="advanced-options">
+      <summary>Opciones avanzadas (JSON / CSV)</summary>
+      <div class="advanced-options-body">
+        <button id="btnImport">📥 Importar JSON</button>
+        <button id="btnExport">📤 Exportar JSON</button>
+        <button id="btnCSV">📊 Exportar CSV</button>
+      </div>
+    </details>
 
     <section class="card table-card">
       <div class="table-wrap">
@@ -1004,7 +1034,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     </section>
 
     <p class="footer-note">
-      Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. El mapa se muestra con Google Maps y cada dirección se ubica automáticamente (geocodificación gratuita) — puede tardar unos segundos por despacho. Usá <strong>Exportar JSON/CSV</strong> para respaldos o para abrir en Excel.
+      Los cambios se sincronizan automáticamente entre todos los que tengan sesión abierta (vos y el transportista), usando el mismo proyecto Firebase del Panel de Operaciones. Si no hay conexión, se guarda solo en este dispositivo y se sincroniza al reconectar. El mapa se muestra con Google Maps y cada dirección se ubica automáticamente (geocodificación gratuita) — puede tardar unos segundos por despacho. Usá <strong>Exportar Excel</strong> para descargar la hoja como planilla, o las opciones avanzadas para respaldos técnicos (JSON/CSV).
     </p>
   </div>
 
@@ -2405,6 +2435,32 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     a.download = `hoja-de-ruta-${fecha}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  });
+
+  $('btnExportExcel').addEventListener('click', () => {
+    if(typeof XLSX === 'undefined'){
+      alert('No se pudo cargar el generador de Excel — revisá tu conexión e intentá de nuevo en unos segundos.');
+      return;
+    }
+    const estadoLabel = v => (ESTADOS.find(e => e.value === v) || {}).label || v;
+    const data = state.rows.map((r, idx) => ({
+      'N°': idx + 1,
+      'Cliente': r.cliente || '',
+      'Dirección': r.direccion || '',
+      'Comuna': r.comuna || '',
+      'Contacto': r.contacto || '',
+      'Productos': r.productos || '',
+      'Estado': estadoLabel(r.estado),
+      'Hora est.': r.hora || '',
+      'Prueba de Entrega': r.prueba || '',
+      'Tarifa': r.tarifa || ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [{wch:4},{wch:24},{wch:28},{wch:16},{wch:16},{wch:26},{wch:14},{wch:10},{wch:20},{wch:10}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Despachos');
+    const fecha = state.fecha || new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, `hoja-de-ruta-${fecha}.xlsx`);
   });
 
   const fileInput = $('fileInput');
