@@ -930,6 +930,11 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       </div>
     </section>
 
+    <div class="toolbar">
+      <button class="primary" id="btnImprimirLiq">🖨️ Imprimir liquidación (PDF)</button>
+      <span class="spacer"></span>
+    </div>
+
     <section class="card table-card">
       <div class="table-wrap">
         <table id="tablaLiq">
@@ -940,6 +945,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
               <th>Dirección</th>
               <th>Estado</th>
               <th>Tarifa</th>
+              <th>N° Factura</th>
+              <th>Factura adjunta</th>
               <th>Pagado</th>
             </tr>
           </thead>
@@ -949,7 +956,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     </section>
 
     <p class="footer-note">
-      Marcá "Pagado" cuando le hayas transferido o entregado el dinero al transportista por ese despacho. Se guarda junto con el resto de la hoja, así lo ve también si tiene sesión abierta.
+      Marcá "Pagado" cuando le hayas transferido o entregado el dinero al transportista por ese despacho. Anotá el N° de factura y, si querés, adjuntá el archivo (PDF o foto) que te mandó. "Imprimir liquidación" arma un comprobante con todos los despachos listados acá para guardar como PDF. Se guarda junto con el resto de la hoja, así lo ve también si tiene sesión abierta.
     </p>
   </div>
   </main>
@@ -1257,6 +1264,64 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       tdTarifa.textContent = formatMoney(tarifa);
       tr.appendChild(tdTarifa);
 
+      const tdNumFactura = document.createElement('td');
+      const inputFactura = document.createElement('input');
+      inputFactura.type = 'text';
+      inputFactura.className = 'prueba';
+      inputFactura.placeholder = 'N° factura';
+      inputFactura.value = row.numeroFactura || '';
+      inputFactura.addEventListener('input', () => {
+        row.numeroFactura = inputFactura.value;
+        commit();
+      });
+      tdNumFactura.appendChild(inputFactura);
+      tr.appendChild(tdNumFactura);
+
+      const tdFacturaFile = document.createElement('td');
+      if(row.facturaUrl){
+        const a = document.createElement('a');
+        a.href = row.facturaUrl; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = '📄 Ver factura';
+        tdFacturaFile.appendChild(a);
+        const cambiar = document.createElement('button');
+        cambiar.className = 'icon-btn';
+        cambiar.title = 'Reemplazar archivo';
+        cambiar.textContent = '✎';
+        cambiar.addEventListener('click', () => facturaFileInput.click());
+        tdFacturaFile.appendChild(cambiar);
+      } else {
+        const btn = document.createElement('button');
+        btn.textContent = '📎 Adjuntar';
+        btn.addEventListener('click', () => facturaFileInput.click());
+        tdFacturaFile.appendChild(btn);
+      }
+      const msgFactura = document.createElement('div');
+      msgFactura.className = 'uploading-msg';
+      tdFacturaFile.appendChild(msgFactura);
+      const facturaFileInput = document.createElement('input');
+      facturaFileInput.type = 'file';
+      facturaFileInput.accept = '.pdf,image/*';
+      facturaFileInput.hidden = true;
+      facturaFileInput.addEventListener('change', async () => {
+        const file = facturaFileInput.files[0];
+        if(!file) return;
+        msgFactura.textContent = 'Subiendo…';
+        try{
+          const path = 'hojasDeRuta/' + HOJA_ID + '/' + row.id + '/factura-' + Date.now() + '-' + file.name;
+          const up = await uploadBlob(path, file, file.type || 'application/octet-stream');
+          row.facturaUrl = up.url;
+          row.facturaPath = up.path;
+          renderLiquidaciones();
+          commit();
+        }catch(err){
+          console.error(err);
+          msgFactura.textContent = '';
+          alert('No se pudo subir la factura: ' + err.message);
+        }
+      });
+      tdFacturaFile.appendChild(facturaFileInput);
+      tr.appendChild(tdFacturaFile);
+
       const tdPagado = document.createElement('td');
       const chk = document.createElement('input');
       chk.type = 'checkbox';
@@ -1276,6 +1341,71 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     $('liqPagado').textContent = formatMoney(pagado);
     $('liqPendiente').textContent = formatMoney(total - pagado);
   }
+
+  function imprimirLiquidacion(){
+    const rows = state.rows.filter(r => r.cliente || r.direccion || Number(r.tarifa));
+    if(!rows.length){ alert('No hay despachos cargados para liquidar.'); return; }
+
+    let total = 0, pagado = 0;
+    const filas = rows.map((r, i) => {
+      const tarifa = Number(r.tarifa) || 0;
+      total += tarifa;
+      if(r.pagado) pagado += tarifa;
+      const estadoInfo = ESTADOS.find(e => e.value === r.estado) || ESTADOS[0];
+      return '<tr>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td>' + (escapeHtml(r.cliente) || '(sin cliente)') + '</td>' +
+        '<td>' + escapeHtml([r.direccion, r.comuna].filter(Boolean).join(', ')) + '</td>' +
+        '<td>' + escapeHtml(estadoInfo.label) + '</td>' +
+        '<td>' + escapeHtml(r.numeroFactura || '—') + '</td>' +
+        '<td style="text-align:right">' + formatMoney(tarifa) + '</td>' +
+        '<td style="text-align:center">' + (r.pagado ? 'Sí' : 'No') + '</td>' +
+        '</tr>';
+    }).join('');
+
+    const fechaEmision = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const win = window.open('', '_blank');
+    if(!win){ alert('El navegador bloqueó la ventana. Permití pop-ups para este sitio e intentá de nuevo.'); return; }
+
+    win.document.write(
+      '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+      '<title>Liquidación de transportista</title>' +
+      '<style>' +
+      'body{ font-family:Arial, Helvetica, sans-serif; color:#1b1a2e; padding:36px; }' +
+      'h1{ font-size:21px; margin:0 0 4px; }' +
+      '.meta{ color:#555; font-size:13px; line-height:1.7; margin-bottom:22px; }' +
+      'table{ width:100%; border-collapse:collapse; font-size:12.5px; }' +
+      'th, td{ border:1px solid #ccc; padding:8px 9px; text-align:left; }' +
+      'th{ background:#f0f0f6; text-transform:uppercase; font-size:11px; letter-spacing:0.3px; }' +
+      '.totales{ margin-top:18px; font-size:13.5px; max-width:280px; margin-left:auto; }' +
+      '.totales div{ display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee; }' +
+      '.totales .final{ font-weight:bold; font-size:15px; border-bottom:none; }' +
+      '.firma{ margin-top:60px; display:flex; gap:60px; }' +
+      '.firma div{ flex:1; border-top:1px solid #999; padding-top:6px; font-size:12px; color:#555; text-align:center; }' +
+      '@media print{ body{ padding:0; } }' +
+      '</style></head><body>' +
+      '<h1>Liquidación de Transportista</h1>' +
+      '<div class="meta">' +
+        'Hoja de ruta: <b>' + escapeHtml(state.titulo || '') + '</b><br>' +
+        'Transportista: <b>' + escapeHtml(state.transportista || '') + '</b><br>' +
+        'Punto de partida: ' + escapeHtml(state.puntoPartida || '') + '<br>' +
+        'Fecha de emisión: ' + fechaEmision +
+      '</div>' +
+      '<table><thead><tr><th>N°</th><th>Cliente</th><th>Dirección</th><th>Estado</th><th>N° Factura</th><th>Tarifa</th><th>Pagado</th></tr></thead>' +
+      '<tbody>' + filas + '</tbody></table>' +
+      '<div class="totales">' +
+        '<div><span>Total liquidación</span><span>' + formatMoney(total) + '</span></div>' +
+        '<div><span>Ya pagado</span><span>' + formatMoney(pagado) + '</span></div>' +
+        '<div class="final"><span>Pendiente de pago</span><span>' + formatMoney(total - pagado) + '</span></div>' +
+      '</div>' +
+      '<div class="firma"><div>Firma responsable</div><div>Firma transportista</div></div>' +
+      '</body></html>'
+    );
+    win.document.close();
+    win.focus();
+    win.print();
+  }
+  $('btnImprimirLiq').addEventListener('click', imprimirLiquidacion);
 
   function updateKpis(){
     const counts = { pendiente: 0, 'en-ruta': 0, entregado: 0, 'no-entregado': 0 };
