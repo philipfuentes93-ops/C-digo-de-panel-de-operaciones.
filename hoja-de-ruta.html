@@ -535,13 +535,6 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   select.estado.en-ruta{ background:var(--warn-bg); color:var(--warn); }
   select.estado.entregado{ background:var(--ok-bg); color:var(--ok); }
   select.estado.no-entregado{ background:var(--bad-bg); color:var(--bad); }
-  input.hora{
-    border:1px solid var(--border);
-    border-radius:6px;
-    padding:5px 6px;
-    font-size:13px;
-    width:100px;
-  }
   input.tarifa{
     border:1px solid var(--border);
     border-radius:6px;
@@ -561,6 +554,16 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .prueba-links a{ color:var(--accent); font-weight:700; text-decoration:none; }
   .prueba-links a:hover{ text-decoration:underline; }
   .prueba-recibio{ color:var(--muted); font-size:11.5px; }
+  .cell-pendiente-chofer{
+    color:var(--muted);
+    font-size:12px;
+    font-style:italic;
+  }
+  .cell-hora-entrega{
+    font-size:13px;
+    font-weight:700;
+    color:var(--text);
+  }
   tfoot td{
     padding:14px 12px;
     font-weight:700;
@@ -991,7 +994,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
     </div>
     <p class="footer-note" style="margin:-8px 0 6px;">
-      El Excel debe traer las columnas <strong>Cliente, Dirección, Comuna, Contacto, Productos</strong> y, si querés, <strong>Estado</strong> — son los datos que vos cargás. <strong>Hora estimada</strong> y <strong>Prueba de Entrega</strong> las completa el transportista directamente acá en el panel.
+      El Excel debe traer las columnas <strong>Cliente, Dirección, Comuna, Contacto, Productos</strong> y, si querés, <strong>Estado</strong> — son los datos que vos cargás. <strong>Hora de entrega</strong> y <strong>Prueba de Entrega</strong> las completa el chofer en el panel <strong>Entregas</strong>, no se cargan acá.
     </p>
     <details class="advanced-options">
       <summary>Opciones avanzadas (JSON / CSV)</summary>
@@ -1014,7 +1017,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
               <th>Contacto</th>
               <th>Productos</th>
               <th>Estado</th>
-              <th>Hora est.</th>
+              <th>Hora entrega</th>
               <th>Prueba de Entrega</th>
               <th>Tarifa</th>
               <th class="col-actions">Acciones</th>
@@ -1986,7 +1989,6 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     const metaChips = [];
     if(row.contacto) metaChips.push(['📞', row.contacto]);
     if(row.productos) metaChips.push(['📦', row.productos]);
-    if(row.hora) metaChips.push(['🕒', 'hora est. ' + row.hora]);
     if(row.tarifa) metaChips.push(['💰', formatMoney(row.tarifa)]);
     if(metaChips.length){
       const meta = document.createElement('div');
@@ -2279,12 +2281,17 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
   function makeHoraCell(row){
     const td = document.createElement('td');
-    const input = document.createElement('input');
-    input.type = 'time';
-    input.className = 'hora';
-    input.value = row.hora || '';
-    input.addEventListener('input', () => { row.hora = input.value; commit(); });
-    td.appendChild(input);
+    if(row.entrega && row.entrega.horaEntrega){
+      const span = document.createElement('span');
+      span.className = 'cell-hora-entrega';
+      span.textContent = row.entrega.horaEntrega;
+      td.appendChild(span);
+    } else {
+      const span = document.createElement('span');
+      span.className = 'cell-pendiente-chofer';
+      span.textContent = 'Pendiente (chofer)';
+      td.appendChild(span);
+    }
     return td;
   }
 
@@ -2314,13 +2321,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       td.appendChild(wrap);
       return td;
     }
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'prueba';
-    input.placeholder = 'Link / nota';
-    input.value = row.prueba || '';
-    input.addEventListener('input', () => { row.prueba = input.value; commit(); });
-    td.appendChild(input);
+    const span = document.createElement('span');
+    span.className = 'cell-pendiente-chofer';
+    span.textContent = 'Pendiente (chofer)';
+    td.appendChild(span);
     return td;
   }
 
@@ -2416,15 +2420,29 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     URL.revokeObjectURL(url);
   });
 
+  function horaEntregaDe(r){
+    return (r.entrega && r.entrega.horaEntrega) || '';
+  }
+
+  function pruebaResumenDe(r){
+    if(!r.entrega) return '';
+    const parts = [];
+    if(r.entrega.recibidoPor) parts.push('Recibió: ' + r.entrega.recibidoPor);
+    if(r.entrega.motivo) parts.push('Motivo: ' + r.entrega.motivo);
+    if(r.entrega.fotoUrl) parts.push('Foto: ' + r.entrega.fotoUrl);
+    if(r.entrega.firmaUrl) parts.push('Firma: ' + r.entrega.firmaUrl);
+    return parts.join(' | ');
+  }
+
   $('btnCSV').addEventListener('click', () => {
-    const headers = ['N°','Cliente','Dirección','Comuna','Contacto','Productos','Estado','Hora est.','Prueba de Entrega','Tarifa'];
+    const headers = ['N°','Cliente','Dirección','Comuna','Contacto','Productos','Estado','Hora entrega','Prueba de Entrega','Tarifa'];
     const estadoLabel = v => (ESTADOS.find(e => e.value === v) || {}).label || v;
     const escape = v => `"${String(v || '').replace(/"/g, '""')}"`;
     const lines = [headers.map(escape).join(',')];
     state.rows.forEach((r, idx) => {
       lines.push([
         idx + 1, r.cliente, r.direccion, r.comuna, r.contacto, r.productos,
-        estadoLabel(r.estado), r.hora, r.prueba, r.tarifa
+        estadoLabel(r.estado), horaEntregaDe(r), pruebaResumenDe(r), r.tarifa
       ].map(escape).join(','));
     });
     const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -2451,8 +2469,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       'Contacto': r.contacto || '',
       'Productos': r.productos || '',
       'Estado': estadoLabel(r.estado),
-      'Hora est.': r.hora || '',
-      'Prueba de Entrega': r.prueba || '',
+      'Hora entrega': horaEntregaDe(r),
+      'Prueba de Entrega': pruebaResumenDe(r),
       'Tarifa': r.tarifa || ''
     }));
     const ws = XLSX.utils.json_to_sheet(data);
@@ -2492,7 +2510,6 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     comuna: ['comuna', 'ciudad', 'sector'],
     contacto: ['contacto', 'telefono', 'fono', 'celular', 'whatsapp'],
     productos: ['productos', 'producto', 'detalle', 'items', 'articulo', 'descripcion'],
-    hora: ['hora estimada', 'hora est', 'hora'],
     tarifa: ['tarifa', 'precio', 'valor', 'monto', 'costo flete', 'flete', 'costo'],
     estado: ['estado']
   };
