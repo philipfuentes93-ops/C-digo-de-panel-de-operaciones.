@@ -165,6 +165,44 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     color:var(--sidebar-text-active);
     box-shadow:inset 3px 0 0 var(--accent);
   }
+  .nav-group{ position:relative; width:100%; display:flex; justify-content:center; }
+  .nav-flyout{
+    position:absolute;
+    left:56px;
+    top:0;
+    background:#fff;
+    border-radius:10px;
+    box-shadow:0 10px 28px rgba(20,20,50,0.25);
+    padding:8px;
+    min-width:190px;
+    z-index:30;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .nav-flyout[hidden]{ display:none; }
+  .nav-flyout-head{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    color:var(--muted);
+    font-weight:800;
+    padding:4px 10px 6px;
+  }
+  .nav-flyout-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 11px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .nav-flyout-item:hover{ background:var(--bg); }
+  .nav-flyout-item.active{ background:var(--pend-bg); color:var(--accent-dark); }
   .sidebar-spacer{ flex:1; }
   .sidebar-footer{
     border-top:1px solid rgba(255,255,255,0.08);
@@ -696,6 +734,13 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       <div class="nav-item active" id="navDespachos" title="Despachos"><span class="nav-icon">📦</span><span class="nav-label">Despachos</span></div>
       <div class="nav-item" id="navChofer" title="Entregas (chofer)"><span class="nav-icon">🖊️</span><span class="nav-label">Entregas</span></div>
       <div class="nav-item" id="navReportes" title="Reportes"><span class="nav-icon">📊</span><span class="nav-label">Reportes</span></div>
+      <div class="nav-group">
+        <div class="nav-item" id="navFlota" title="Gestión de flotas"><span class="nav-icon">🚛</span><span class="nav-label">Gestión de flotas</span></div>
+        <div class="nav-flyout" id="flotaFlyout" hidden>
+          <div class="nav-flyout-head">Gestión de flotas</div>
+          <div class="nav-flyout-item" id="navLiquidaciones">💰 Liquidaciones</div>
+        </div>
+      </div>
     </nav>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-footer">
@@ -863,6 +908,50 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       <div class="chart-holder" id="chartTarifa"></div>
     </section>
   </div>
+
+  <div id="viewLiquidaciones" hidden>
+    <div class="content-header">
+      <h1>Liquidaciones</h1>
+      <p>Cuadrá con el transportista qué despachos ya se pagaron y cuáles quedan pendientes.</p>
+    </div>
+
+    <section class="stat-grid">
+      <div class="card stat-tile">
+        <span class="stat-label">Total tarifa</span>
+        <span class="stat-value" id="liqTotal">$0</span>
+      </div>
+      <div class="card stat-tile">
+        <span class="stat-label">Pagado</span>
+        <span class="stat-value" id="liqPagado">$0</span>
+      </div>
+      <div class="card stat-tile">
+        <span class="stat-label">Pendiente de pago</span>
+        <span class="stat-value" id="liqPendiente">$0</span>
+      </div>
+    </section>
+
+    <section class="card table-card">
+      <div class="table-wrap">
+        <table id="tablaLiq">
+          <thead>
+            <tr>
+              <th class="col-num">N°</th>
+              <th>Cliente</th>
+              <th>Dirección</th>
+              <th>Estado</th>
+              <th>Tarifa</th>
+              <th>Pagado</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyLiq"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="footer-note">
+      Marcá "Pagado" cuando le hayas transferido o entregado el dinero al transportista por ese despacho. Se guarda junto con el resto de la hoja, así lo ve también si tiene sesión abierta.
+    </p>
+  </div>
   </main>
 </div>
 
@@ -894,7 +983,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   function uid(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
   function defaultRow(){
-    return { id: uid(), cliente:'', direccion:'', comuna:'', contacto:'', productos:'', estado:'pendiente', hora:'', prueba:'', tarifa:'' };
+    return { id: uid(), cliente:'', direccion:'', comuna:'', contacto:'', productos:'', estado:'pendiente', hora:'', prueba:'', tarifa:'', pagado:false };
   }
 
   function defaultState(){
@@ -1125,6 +1214,67 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     geocodeAllPending();
     if(currentView === 'reportes') renderReportes();
     if(currentView === 'chofer') renderChofer();
+    if(currentView === 'liquidaciones') renderLiquidaciones();
+  }
+
+  /* ============================================================
+     LIQUIDACIONES — cuadrar pagos pendientes con el transportista
+     ============================================================ */
+  function renderLiquidaciones(){
+    const tbodyLiq = $('tbodyLiq');
+    tbodyLiq.innerHTML = '';
+
+    let total = 0, pagado = 0;
+    state.rows.forEach((row, idx) => {
+      const tarifa = Number(row.tarifa) || 0;
+      total += tarifa;
+      if(row.pagado) pagado += tarifa;
+
+      const tr = document.createElement('tr');
+
+      const tdNum = document.createElement('td');
+      tdNum.className = 'col-num';
+      tdNum.textContent = String(idx + 1);
+      tr.appendChild(tdNum);
+
+      const tdCliente = document.createElement('td');
+      tdCliente.textContent = row.cliente || '(sin cliente)';
+      tr.appendChild(tdCliente);
+
+      const tdDireccion = document.createElement('td');
+      tdDireccion.textContent = [row.direccion, row.comuna].filter(Boolean).join(', ');
+      tr.appendChild(tdDireccion);
+
+      const tdEstado = document.createElement('td');
+      const estadoInfo = ESTADOS.find(e => e.value === row.estado) || ESTADOS[0];
+      const pill = document.createElement('span');
+      pill.className = 'estado-pill ' + estadoInfo.cls;
+      pill.textContent = estadoInfo.label;
+      tdEstado.appendChild(pill);
+      tr.appendChild(tdEstado);
+
+      const tdTarifa = document.createElement('td');
+      tdTarifa.textContent = formatMoney(tarifa);
+      tr.appendChild(tdTarifa);
+
+      const tdPagado = document.createElement('td');
+      const chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.checked = !!row.pagado;
+      chk.addEventListener('change', () => {
+        row.pagado = chk.checked;
+        renderLiquidaciones();
+        commit();
+      });
+      tdPagado.appendChild(chk);
+      tr.appendChild(tdPagado);
+
+      tbodyLiq.appendChild(tr);
+    });
+
+    $('liqTotal').textContent = formatMoney(total);
+    $('liqPagado').textContent = formatMoney(pagado);
+    $('liqPendiente').textContent = formatMoney(total - pagado);
   }
 
   function updateKpis(){
@@ -1158,15 +1308,33 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     $('viewDespachos').hidden = view !== 'despachos';
     $('viewChofer').hidden = view !== 'chofer';
     $('viewReportes').hidden = view !== 'reportes';
+    $('viewLiquidaciones').hidden = view !== 'liquidaciones';
     $('navDespachos').classList.toggle('active', view === 'despachos');
     $('navChofer').classList.toggle('active', view === 'chofer');
     $('navReportes').classList.toggle('active', view === 'reportes');
+    $('navFlota').classList.toggle('active', view === 'liquidaciones');
+    $('navLiquidaciones').classList.toggle('active', view === 'liquidaciones');
     if(view === 'reportes') renderReportes();
     if(view === 'chofer') renderChofer();
+    if(view === 'liquidaciones') renderLiquidaciones();
   }
   $('navDespachos').addEventListener('click', () => switchView('despachos'));
   $('navChofer').addEventListener('click', () => switchView('chofer'));
   $('navReportes').addEventListener('click', () => switchView('reportes'));
+
+  $('navFlota').addEventListener('click', (e) => {
+    e.stopPropagation();
+    $('flotaFlyout').hidden = !$('flotaFlyout').hidden;
+  });
+  $('navLiquidaciones').addEventListener('click', () => {
+    $('flotaFlyout').hidden = true;
+    switchView('liquidaciones');
+  });
+  document.addEventListener('click', (e) => {
+    if(!$('flotaFlyout').hidden && !e.target.closest('.nav-group')){
+      $('flotaFlyout').hidden = true;
+    }
+  });
 
   function renderBarChart(container, items, opts){
     opts = opts || {};
