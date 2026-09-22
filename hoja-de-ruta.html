@@ -878,7 +878,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
           <div class="nav-flyout-item" data-view="reportes">📊 Reportes</div>
         </div>
       </div>
-      <div class="nav-group">
+      <div class="nav-group" data-nav-mode="menu">
         <div class="nav-item" id="navFlota" title="Gestión de flotas"><span class="nav-icon">🚛</span><span class="nav-label">Gestión de flotas</span></div>
         <div class="nav-flyout" id="flotaFlyout" hidden>
           <div class="nav-flyout-head">Gestión de flotas</div>
@@ -1598,19 +1598,22 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     if(view === 'liquidaciones') renderLiquidaciones();
   }
 
-  // Cada ícono del menú es un "nav-group": si su categoría tiene una sola
-  // opción, el clic navega directo; si tiene varias (subíndices), despliega
-  // el flyout para elegir. Así se pueden sumar categorías nuevas a futuro
-  // agregando más .nav-flyout-item dentro del grupo, sin tocar esta lógica.
+  // Cada ícono del menú es un "nav-group". Los que tienen data-nav-mode="menu"
+  // (como Gestión de flotas) siempre despliegan su flyout al hacer clic, aunque
+  // tengan una sola opción todavía. Los demás navegan directo mientras tengan
+  // una sola opción, y pasan a desplegar el flyout apenas tengan varias
+  // (subíndices). Así se pueden sumar categorías nuevas a futuro agregando más
+  // .nav-flyout-item dentro del grupo, sin tocar esta lógica.
   document.querySelectorAll('.nav-group').forEach(group => {
     const mainItem = group.querySelector('.nav-item');
     const flyout = group.querySelector('.nav-flyout');
     const options = Array.from(flyout.querySelectorAll('.nav-flyout-item'));
+    const alwaysMenu = group.dataset.navMode === 'menu';
 
     mainItem.addEventListener('click', (e) => {
       e.stopPropagation();
       document.querySelectorAll('.nav-flyout').forEach(f => { if(f !== flyout) f.hidden = true; });
-      if(options.length <= 1){
+      if(!alwaysMenu && options.length <= 1){
         flyout.hidden = true;
         switchView(options[0].dataset.view);
       } else {
