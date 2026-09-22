@@ -857,14 +857,32 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       <span class="name">Hoja de Ruta</span>
     </div>
     <nav class="sidebar-nav">
-      <div class="nav-item active" id="navDespachos" title="Despachos"><span class="nav-icon">📦</span><span class="nav-label">Despachos</span></div>
-      <div class="nav-item" id="navChofer" title="Entregas (chofer)"><span class="nav-icon">🖊️</span><span class="nav-label">Entregas</span></div>
-      <div class="nav-item" id="navReportes" title="Reportes"><span class="nav-icon">📊</span><span class="nav-label">Reportes</span></div>
+      <div class="nav-group">
+        <div class="nav-item active" id="navDespachos" title="Despachos"><span class="nav-icon">📦</span><span class="nav-label">Despachos</span></div>
+        <div class="nav-flyout" id="despachosFlyout" hidden>
+          <div class="nav-flyout-head">Despachos</div>
+          <div class="nav-flyout-item active" data-view="despachos">📦 Despachos</div>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-item" id="navChofer" title="Entregas (chofer)"><span class="nav-icon">🖊️</span><span class="nav-label">Entregas</span></div>
+        <div class="nav-flyout" id="choferFlyout" hidden>
+          <div class="nav-flyout-head">Entregas</div>
+          <div class="nav-flyout-item" data-view="chofer">🖊️ Entregas</div>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-item" id="navReportes" title="Reportes"><span class="nav-icon">📊</span><span class="nav-label">Reportes</span></div>
+        <div class="nav-flyout" id="reportesFlyout" hidden>
+          <div class="nav-flyout-head">Reportes</div>
+          <div class="nav-flyout-item" data-view="reportes">📊 Reportes</div>
+        </div>
+      </div>
       <div class="nav-group">
         <div class="nav-item" id="navFlota" title="Gestión de flotas"><span class="nav-icon">🚛</span><span class="nav-label">Gestión de flotas</span></div>
         <div class="nav-flyout" id="flotaFlyout" hidden>
           <div class="nav-flyout-head">Gestión de flotas</div>
-          <div class="nav-flyout-item" id="navLiquidaciones">💰 Liquidaciones</div>
+          <div class="nav-flyout-item" data-view="liquidaciones">💰 Liquidaciones</div>
         </div>
       </div>
     </nav>
@@ -1567,30 +1585,51 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     $('viewChofer').hidden = view !== 'chofer';
     $('viewReportes').hidden = view !== 'reportes';
     $('viewLiquidaciones').hidden = view !== 'liquidaciones';
-    $('navDespachos').classList.toggle('active', view === 'despachos');
-    $('navChofer').classList.toggle('active', view === 'chofer');
-    $('navReportes').classList.toggle('active', view === 'reportes');
-    $('navFlota').classList.toggle('active', view === 'liquidaciones');
-    $('navLiquidaciones').classList.toggle('active', view === 'liquidaciones');
+
+    document.querySelectorAll('.nav-group').forEach(group => {
+      const flyoutItems = Array.from(group.querySelectorAll('.nav-flyout-item'));
+      const matched = flyoutItems.some(i => i.dataset.view === view);
+      group.querySelector('.nav-item').classList.toggle('active', matched);
+      flyoutItems.forEach(i => i.classList.toggle('active', i.dataset.view === view));
+    });
+
     if(view === 'reportes') renderReportes();
     if(view === 'chofer') renderChofer();
     if(view === 'liquidaciones') renderLiquidaciones();
   }
-  $('navDespachos').addEventListener('click', () => switchView('despachos'));
-  $('navChofer').addEventListener('click', () => switchView('chofer'));
-  $('navReportes').addEventListener('click', () => switchView('reportes'));
 
-  $('navFlota').addEventListener('click', (e) => {
-    e.stopPropagation();
-    $('flotaFlyout').hidden = !$('flotaFlyout').hidden;
+  // Cada ícono del menú es un "nav-group": si su categoría tiene una sola
+  // opción, el clic navega directo; si tiene varias (subíndices), despliega
+  // el flyout para elegir. Así se pueden sumar categorías nuevas a futuro
+  // agregando más .nav-flyout-item dentro del grupo, sin tocar esta lógica.
+  document.querySelectorAll('.nav-group').forEach(group => {
+    const mainItem = group.querySelector('.nav-item');
+    const flyout = group.querySelector('.nav-flyout');
+    const options = Array.from(flyout.querySelectorAll('.nav-flyout-item'));
+
+    mainItem.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.nav-flyout').forEach(f => { if(f !== flyout) f.hidden = true; });
+      if(options.length <= 1){
+        flyout.hidden = true;
+        switchView(options[0].dataset.view);
+      } else {
+        flyout.hidden = !flyout.hidden;
+      }
+    });
+
+    options.forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        flyout.hidden = true;
+        switchView(opt.dataset.view);
+      });
+    });
   });
-  $('navLiquidaciones').addEventListener('click', () => {
-    $('flotaFlyout').hidden = true;
-    switchView('liquidaciones');
-  });
+
   document.addEventListener('click', (e) => {
-    if(!$('flotaFlyout').hidden && !e.target.closest('.nav-group')){
-      $('flotaFlyout').hidden = true;
+    if(!e.target.closest('.nav-group')){
+      document.querySelectorAll('.nav-flyout').forEach(f => { f.hidden = true; });
     }
   });
 
