@@ -46,32 +46,38 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 </script>
 <style>
   :root{
-    --sidebar:#161532;
-    --sidebar-2:#1f1e42;
-    --sidebar-text:#a9a7c9;
+    --sidebar:#0f4c5c;
+    --sidebar-2:rgba(255,255,255,0.16);
+    --sidebar-text:#b5dcd8;
     --sidebar-text-active:#ffffff;
-    --accent:#5b4fe6;
-    --accent-dark:#4a3fce;
-    --border:#e4e5f1;
-    --bg:#f3f4fa;
+    --accent:#0e8f8a;
+    --accent-dark:#0e6b73;
+    --teal:#14b8a6;
+    --blue:#3b82f6;
+    --coral:#ff7f6b;
+    --border:#d8ebe9;
+    --bg:#eef8f6;
     --panel:#ffffff;
-    --text:#211f3d;
-    --muted:#71708f;
-    --ok:#1f9d55;
-    --ok-bg:#e3f7ea;
-    --warn:#b8860b;
-    --warn-bg:#fbf1d8;
-    --pend:#71708f;
-    --pend-bg:#eceef4;
-    --bad:#d33f3f;
-    --bad-bg:#fde8e8;
+    --text:#12302f;
+    --muted:#5b7473;
+    --ok:#0e7c72;
+    --ok-bg:#d5f5f0;
+    --warn:#2458c9;
+    --warn-bg:#dde9ff;
+    --pend:#5b7473;
+    --pend-bg:#e8efef;
+    --bad:#c2452f;
+    --bad-bg:#ffe5de;
+    --excel:#137a3a;
+    --excel-bg:#ecfbf1;
+    --excel-border:#b4e8c6;
   }
   *{box-sizing:border-box;}
   html,body{ height:100%; }
   body{
     margin:0;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:linear-gradient(165deg, #eef1fc 0%, #f5f2fb 45%, #fdf0f6 100%);
+    background:linear-gradient(165deg, #ecf9f7 0%, #f5fbfc 50%, #fff3ef 100%);
     background-attachment:fixed;
     color:var(--text);
   }
@@ -80,7 +86,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .login-screen{
     position:fixed;
     inset:0;
-    background:linear-gradient(160deg,#161532,#2a2760);
+    background:linear-gradient(160deg,#0f4c5c,#0e7c72);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -112,6 +118,27 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .login-box input:focus{ outline:none; border-color:var(--accent); }
   .login-box .row-btns{ display:flex; gap:8px; margin-top:6px; }
   .login-box button{ flex:1; }
+  .app-dialog{
+    position:fixed;
+    inset:0;
+    background:rgba(15,76,92,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:60;
+  }
+  .app-dialog[hidden]{ display:none; }
+  .app-dialog-box{
+    background:#fff;
+    border-radius:16px;
+    padding:24px 22px 18px;
+    max-width:460px;
+    width:100%;
+    box-shadow:0 20px 50px rgba(15,76,92,0.35);
+  }
+  .app-dialog-msg{ margin:0 0 18px; font-size:14px; line-height:1.55; color:var(--text); white-space:pre-line; }
+  .app-dialog-btns{ display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
   .login-err{ color:var(--bad); font-size:12.5px; margin-top:12px; min-height:16px; }
 
   /* ---------- App shell ---------- */
@@ -124,7 +151,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .sidebar{
     width:72px;
     flex:none;
-    background:var(--sidebar);
+    background:linear-gradient(180deg,#0f4c5c 0%,#0e6b73 100%);
     color:var(--sidebar-text);
     display:flex;
     flex-direction:column;
@@ -141,7 +168,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .sidebar-logo .badge{
     width:38px; height:38px;
     border-radius:11px;
-    background:linear-gradient(135deg,var(--accent),#8b7dff);
+    background:linear-gradient(135deg,var(--coral),#ffb199);
     display:flex; align-items:center; justify-content:center;
     font-size:18px;
     flex:none;
@@ -165,7 +192,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .nav-item.active{
     background:var(--sidebar-2);
     color:var(--sidebar-text-active);
-    box-shadow:inset 3px 0 0 var(--accent);
+    box-shadow:inset 3px 0 0 var(--coral);
   }
   .nav-group{ position:relative; width:100%; display:flex; justify-content:center; }
   .nav-flyout{
@@ -174,7 +201,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     top:0;
     background:#fff;
     border-radius:10px;
-    box-shadow:0 10px 28px rgba(20,20,50,0.25);
+    box-shadow:0 10px 28px rgba(15,76,92,0.25);
     padding:8px;
     min-width:190px;
     z-index:30;
@@ -231,7 +258,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .link-btn{
     background:none;
     border:none;
-    color:#9c99d8;
+    color:#a7d8d4;
     font-size:16px;
     font-weight:700;
     padding:4px;
@@ -281,7 +308,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .content-header h1{
     margin:0 0 4px;
     font-size:24px;
-    color:var(--text);
+    color:var(--accent-dark);
   }
   .content-header p{
     margin:0;
@@ -309,7 +336,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   }
   .progress-fill{
     height:100%;
-    background:linear-gradient(90deg,var(--accent),#8b7dff);
+    background:linear-gradient(90deg,var(--teal),var(--blue));
     border-radius:6px;
     transition:width .3s ease;
   }
@@ -334,7 +361,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     background:var(--panel);
     border-radius:14px;
     border:1px solid var(--border);
-    box-shadow:0 2px 10px rgba(30,30,70,0.04);
+    box-shadow:0 2px 10px rgba(15,76,92,0.04);
   }
 
   .summary-card{
@@ -418,11 +445,13 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     gap:6px;
     transition:background .15s, transform .05s;
   }
-  button:hover{ background:#f1f1fb; }
+  button:hover{ background:var(--bg); }
   button:active{ transform:translateY(1px); }
-  button.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.primary{ background:linear-gradient(135deg,var(--accent),var(--accent-dark)); border-color:transparent; color:#fff; box-shadow:0 4px 12px rgba(14,143,138,0.28); }
   button.primary:hover{ background:var(--accent-dark); }
-  button.danger{ color:var(--bad); }
+  button.excel{ background:var(--excel-bg); border-color:var(--excel-border); color:var(--excel); }
+  button.excel:hover{ background:#d9f5e3; }
+  button.danger{ background:#fff3ef; border-color:#fbd0c5; color:var(--bad); }
   button.danger:hover{ background:var(--bad-bg); }
   .spacer{ flex:1; }
 
@@ -431,10 +460,11 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     border-radius:14px;
     overflow:hidden;
     margin-bottom:18px;
+    background:var(--panel);
     border:1px solid var(--border);
-    box-shadow:0 2px 10px rgba(30,30,70,0.04);
+    box-shadow:0 2px 10px rgba(15,76,92,0.04);
   }
-  #mapView{ height:480px; background:#e9eaf3; }
+  #mapView{ height:480px; background:#e3f1ef; }
   .map-overlay{
     position:absolute;
     top:14px;
@@ -442,7 +472,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     z-index:10;
     background:#fff;
     border-radius:12px;
-    box-shadow:0 10px 28px rgba(20,20,50,0.2);
+    box-shadow:0 10px 28px rgba(15,76,92,0.2);
     padding:12px 14px;
     max-width:260px;
   }
@@ -493,8 +523,13 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-size:13.5px;
     vertical-align:top;
   }
-  tbody tr:nth-child(even){ background:#fafafe; }
-  tbody tr:hover{ background:#f1f0fc; }
+  tbody tr:nth-child(even){ background:#f6fcfb; }
+  tbody tr:hover{ background:#e9f6f4; }
+  /* Franja de color a la izquierda de cada fila según su estado */
+  tbody tr:has(select.estado) td:first-child{ box-shadow:inset 4px 0 0 #b6c7c6; }
+  tbody tr:has(select.estado.en-ruta) td:first-child{ box-shadow:inset 4px 0 0 var(--blue); }
+  tbody tr:has(select.estado.entregado) td:first-child{ box-shadow:inset 4px 0 0 var(--teal); }
+  tbody tr:has(select.estado.no-entregado) td:first-child{ box-shadow:inset 4px 0 0 var(--coral); }
   td[contenteditable]{
     outline:none;
     min-width:90px;
@@ -521,7 +556,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-size:15px;
     border-radius:6px;
   }
-  .icon-btn:hover{ background:#e6e6f7; color:var(--bad); }
+  .icon-btn:hover{ background:var(--bad-bg); color:var(--bad); }
   select.estado{
     border:none;
     border-radius:20px;
@@ -533,6 +568,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     -webkit-appearance:none;
     text-align:center;
     width:100%;
+    min-width:108px;
   }
   select.estado.pendiente{ background:var(--pend-bg); color:var(--pend); }
   select.estado.en-ruta{ background:var(--warn-bg); color:var(--warn); }
@@ -571,7 +607,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     padding:14px 12px;
     font-weight:700;
     border-top:2px solid var(--sidebar);
-    background:#f7f7fc;
+    background:#f0f8f7;
   }
   .footer-note{
     font-size:12px;
@@ -603,6 +639,13 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-weight:800;
     color:var(--text);
   }
+  .stat-grid .stat-tile{ border:none; color:#fff; box-shadow:0 6px 16px rgba(15,76,92,0.14); }
+  .stat-grid .stat-tile:nth-child(4n+1){ background:linear-gradient(135deg,#14b8a6,#0e7c72); }
+  .stat-grid .stat-tile:nth-child(4n+2){ background:linear-gradient(135deg,#3b82f6,#2458c9); }
+  .stat-grid .stat-tile:nth-child(4n+3){ background:linear-gradient(135deg,#ff7f6b,#e2553f); }
+  .stat-grid .stat-tile:nth-child(4n+4){ background:linear-gradient(135deg,#0f4c5c,#0e6b73); }
+  .stat-grid .stat-label{ color:rgba(255,255,255,0.88); }
+  .stat-grid .stat-value{ color:#fff; }
   .chart-card{ padding:18px 22px; margin-bottom:16px; }
   .chart-card h2{ margin:0 0 4px; font-size:14px; color:var(--text); }
   .chart-note{ margin:0 0 10px; font-size:12px; color:var(--muted); }
@@ -672,7 +715,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     text-align:left;
     transition:background .15s ease, box-shadow .15s ease;
   }
-  .chofer-compact-row:hover{ background:var(--bg); box-shadow:0 2px 8px rgba(30,30,70,0.06); }
+  .chofer-compact-row:hover{ background:var(--bg); box-shadow:0 2px 8px rgba(15,76,92,0.06); }
   .chofer-compact-row.entregado{ border-left-color:var(--ok); }
   .chofer-compact-row.no-entregado{ border-left-color:var(--bad); }
   .chofer-compact-row .chofer-num{ width:24px; height:24px; font-size:11.5px; }
@@ -702,11 +745,11 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     padding:16px 18px 18px;
     margin-bottom:14px;
     border-left:5px solid var(--pend);
-    box-shadow:0 3px 14px rgba(30,30,70,0.06);
+    box-shadow:0 3px 14px rgba(15,76,92,0.06);
     transition:box-shadow .15s ease, transform .15s ease;
   }
   .chofer-card:hover{
-    box-shadow:0 8px 22px rgba(30,30,70,0.1);
+    box-shadow:0 8px 22px rgba(15,76,92,0.1);
     transform:translateY(-1px);
   }
   .chofer-card.pendiente{ border-left-color:var(--pend); }
@@ -816,7 +859,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .signature-wrap{
     border:1px dashed var(--border);
     border-radius:10px;
-    background:#fafafe;
+    background:#f6fcfb;
     touch-action:none;
     max-width:420px;
   }
@@ -875,6 +918,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     .content-header p{ display:none; }
     .kpi-bar{ padding:12px; gap:12px 18px; }
     .kpi-progress{ min-width:100%; order:-1; }
+    .progress-track{ min-width:40px; }
     .summary-card{ padding:14px 16px; gap:12px 20px; }
     .field{ min-width:130px; }
     .field.grow{ min-width:100%; }
@@ -1000,10 +1044,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
         </div>
         <div class="map-overlay-body" id="mapOverlayBody">
           <div class="map-legend">
-            <span class="swatch"><span class="dot" style="background:#71708f"></span> Pendiente</span>
-            <span class="swatch"><span class="dot" style="background:#b8860b"></span> En ruta</span>
-            <span class="swatch"><span class="dot" style="background:#1f9d55"></span> Entregado</span>
-            <span class="swatch"><span class="dot" style="background:#d33f3f"></span> No entregado</span>
+            <span class="swatch"><span class="dot" style="background:#94a8a7"></span> Pendiente</span>
+            <span class="swatch"><span class="dot" style="background:#3b82f6"></span> En ruta</span>
+            <span class="swatch"><span class="dot" style="background:#14b8a6"></span> Entregado</span>
+            <span class="swatch"><span class="dot" style="background:#ff7f6b"></span> No entregado</span>
           </div>
         </div>
       </div>
@@ -1011,14 +1055,14 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
     <div class="toolbar">
       <button class="primary" id="btnAddRow">➕ Agregar despacho</button>
-      <button class="primary" id="btnImportExcel">📊 Importar Excel</button>
-      <button id="btnExportExcel">📤 Exportar Excel</button>
+      <button class="excel" id="btnImportExcel">📊 Importar Excel</button>
+      <button class="excel" id="btnExportExcel">📤 Exportar Excel</button>
       <button id="btnPrint">🖨️ Imprimir / PDF</button>
       <span class="spacer"></span>
       <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
     </div>
     <p class="footer-note" style="margin:-8px 0 6px;">
-      El Excel debe traer las columnas <strong>Cliente, Dirección, Comuna, Contacto, Productos</strong> y, si querés, <strong>Estado</strong> — son los datos que vos cargás. <strong>Hora de entrega</strong> y <strong>Prueba de Entrega</strong> las completa el chofer en el panel <strong>Entregas</strong>, no se cargan acá.
+      El Excel debe traer las columnas <strong>Cliente, Dirección, Comuna, Contacto, Productos</strong> y, si querés, <strong>Estado</strong> — son los datos que vos cargás. Si el Excel trae <strong>fotos de respaldo</strong> en alguna columna, se guardan como foto de prueba de entrega del despacho de esa fila. <strong>Hora de entrega</strong> y <strong>Prueba de Entrega</strong> las completa el chofer en el panel <strong>Entregas</strong>, no se cargan acá.
     </p>
     <details class="advanced-options">
       <summary>Opciones avanzadas (JSON / CSV)</summary>
@@ -1188,7 +1232,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     { value: 'entregado', label: 'Entregado', cls: 'entregado' },
     { value: 'no-entregado', label: 'No entregado', cls: 'no-entregado' }
   ];
-  const ESTADO_COLORS = { pendiente:'#71708f', 'en-ruta':'#b8860b', entregado:'#1f9d55', 'no-entregado':'#d33f3f' };
+  const ESTADO_COLORS = { pendiente:'#94a8a7', 'en-ruta':'#3b82f6', entregado:'#14b8a6', 'no-entregado':'#ff7f6b' };
 
   function escapeHtml(s){
     return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -1374,6 +1418,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       row.lat = lat;
       row.lng = lng;
       updateMap();
+      // Solo se guarda si el despacho sigue en la lista actual y esta pestaña no tiene
+      // una versión más nueva de la hoja esperando: si no, se pisaría esa versión
+      // (por ejemplo, una importación hecha desde otra pestaña) con una lista vieja.
+      if(!state.rows.includes(row) || pendingRemote) return;
       cacheLocal();
       commit();
     });
@@ -1392,6 +1440,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       state.startLat = lat;
       state.startLng = lng;
       updateMap();
+      if(pendingRemote) return; // hay una versión más nueva esperando: no pisarla
       cacheLocal();
       commit();
     });
@@ -1637,7 +1686,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   /* ============================================================
      REPORTES (gráficos de barras en SVG, sin librerías)
      ============================================================ */
-  const ACCENT_HEX = '#5b4fe6';
+  const ACCENT_HEX = '#0e8f8a';
   let currentView = 'despachos';
   let resueltosOpen = false;
   let expandedResueltoIds = new Set();
@@ -1729,7 +1778,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       label.setAttribute('y', y + rowH / 2 + 4);
       label.setAttribute('text-anchor', 'end');
       label.setAttribute('font-size', '12');
-      label.setAttribute('fill', '#71708f');
+      label.setAttribute('fill', '#5b7473');
       label.textContent = item.label.length > 18 ? item.label.slice(0, 17) + '…' : item.label;
       const labelTitle = document.createElementNS(ns, 'title');
       labelTitle.textContent = item.label;
@@ -1742,7 +1791,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       track.setAttribute('width', barMaxW);
       track.setAttribute('height', barH);
       track.setAttribute('rx', barH / 2);
-      track.setAttribute('fill', '#eef0f7');
+      track.setAttribute('fill', '#e3f1ef');
       svg.appendChild(track);
 
       const bar = document.createElementNS(ns, 'rect');
@@ -1762,7 +1811,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       valueLabel.setAttribute('y', y + rowH / 2 + 4);
       valueLabel.setAttribute('font-size', '12');
       valueLabel.setAttribute('font-weight', '700');
-      valueLabel.setAttribute('fill', '#211f3d');
+      valueLabel.setAttribute('fill', '#12302f');
       valueLabel.textContent = formatted;
       svg.appendChild(valueLabel);
     });
@@ -2535,7 +2584,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     contacto: ['contacto', 'telefono', 'fono', 'celular', 'whatsapp'],
     productos: ['productos', 'producto', 'detalle', 'items', 'articulo', 'descripcion'],
     tarifa: ['tarifa', 'precio', 'valor', 'monto', 'costo flete', 'flete', 'costo'],
-    estado: ['estado']
+    estado: ['estado'],
+    horaEntrega: ['hora entrega', 'hora de entrega', 'hora']
   };
 
   function normalizeHeaderText(text){
@@ -2566,17 +2616,263 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     return 'pendiente';
   }
 
+  // Excel guarda las horas como fracción del día (0,66 = 15:50); también acepta texto "15:55:00".
+  function horaFromExcel(value){
+    if(typeof value === 'number' && isFinite(value)){
+      const mins = Math.round((value % 1) * 24 * 60) % (24 * 60);
+      return String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0');
+    }
+    const m = /(\d{1,2})[:.](\d{2})/.exec(String(value || ''));
+    return m ? m[1].padStart(2, '0') + ':' + m[2] : '';
+  }
+
   function rowFromExcelRecord(record){
     const row = defaultRow();
+    // Qué campos trajo el archivo (no se guarda): al actualizar un despacho que ya
+    // existe solo se pisan estos, y se conserva lo demás (pagado, factura, firma…).
+    Object.defineProperty(row, '_campos', { value: new Set(), enumerable: false });
     Object.keys(record).forEach(header => {
       const field = fieldForHeader(header);
       if(!field) return;
       const raw = record[header];
+      row._campos.add(field);
       if(field === 'tarifa') row.tarifa = parseTarifaValue(raw);
       else if(field === 'estado') row.estado = estadoFromText(raw);
+      else if(field === 'horaEntrega'){
+        const hora = horaFromExcel(raw);
+        if(hora) row.entrega = Object.assign({}, row.entrega || {}, { horaEntrega: hora });
+      }
       else row[field] = String(raw ?? '').trim();
     });
     return row;
+  }
+
+  // ---------- Fotos dentro del Excel (columna de respaldo) ----------
+  // Un .xlsx es un ZIP: las fotos viven en xl/media/ y otros archivos XML dicen
+  // en qué fila está cada una. Se soportan los tres formatos habituales:
+  //  1) foto flotante sobre la celda (Insertar > Imagen), vía xl/drawings/;
+  //  2) foto "dentro de la celda" de Excel 365, vía xl/richData/ + metadata.xml;
+  //  3) foto de WPS Office con fórmula DISPIMG, vía xl/cellimages.xml.
+  // Devuelve un Map { fila de la hoja (base 0) → [Blob, …] } de la primera hoja.
+  const IMG_MIME = { png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', bmp:'image/bmp', webp:'image/webp' };
+
+  function extractExcelImagesByRow(data){
+    const byRow = new Map();
+    byRow.info = { media: 0, formatos: [] };
+    let zip;
+    try{ zip = XLSX.CFB.read(data, { type:'array' }); }catch(e){ return byRow; }
+    const files = {};
+    zip.FullPaths.forEach((p, i) => {
+      const entry = zip.FileIndex[i];
+      if(entry && entry.content && entry.content.length) files[p.replace(/^Root Entry\//, '').toLowerCase()] = entry.content;
+    });
+    byRow.info.media = Object.keys(files).filter(f => /^xl\/media\//.test(f)).length;
+    const text = path => files[path] ? new TextDecoder().decode(files[path]) : null;
+    const xml = path => { const t = text(path); return t ? new DOMParser().parseFromString(t, 'application/xml') : null; };
+    const byName = (node, name) => node ? Array.from(node.getElementsByTagName('*')).filter(n => n.localName === name) : [];
+    const firstByName = (node, name) => byName(node, name)[0] || null;
+    const relAttr = (node, name) => {
+      for(const a of Array.from(node.attributes)) if(a.localName === name) return a.value;
+      return null;
+    };
+    const dirOf = path => path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
+    const resolve = (base, target) => {
+      if(target.startsWith('/')) return target.slice(1).toLowerCase();
+      const parts = (dirOf(base) + target).split('/'), out = [];
+      parts.forEach(s => { if(s === '..') out.pop(); else if(s && s !== '.') out.push(s); });
+      return out.join('/').toLowerCase();
+    };
+    const rels = path => {
+      const map = {};
+      const doc = xml(dirOf(path) + '_rels/' + path.slice(dirOf(path).length) + '.rels');
+      byName(doc, 'Relationship').forEach(r => {
+        const target = r.getAttribute('Target');
+        map[r.getAttribute('Id')] = r.getAttribute('TargetMode') === 'External' ? target : resolve(path, target);
+      });
+      return map;
+    };
+    const addImage = (row, mediaPath) => {
+      const bytes = files[mediaPath];
+      const mime = IMG_MIME[(mediaPath.split('.').pop() || '').toLowerCase()];
+      if(!bytes || !mime || row < 0){ // EMF/WMF/TIFF no se pueden mostrar en el navegador
+        byRow.info.formatos.push('omitida:' + mediaPath.split('/').pop());
+        return;
+      }
+      if(!byRow.has(row)) byRow.set(row, []);
+      byRow.get(row).push(new Blob([bytes], { type: mime }));
+    };
+    // Foto que está en internet (fórmula =IMAGEN("https://…")): se guarda el enlace tal cual.
+    const addUrl = (row, url) => {
+      if(row < 0 || !/^https?:\/\//i.test(url || '')) return;
+      if(!byRow.has(row)) byRow.set(row, []);
+      byRow.get(row).push({ url });
+    };
+    const rowOfRef = ref => { const m = /\d+/.exec(ref || ''); return m ? Number(m[0]) - 1 : -1; };
+
+    // Ruta de la primera hoja (la misma que lee el importador).
+    const wbPath = 'xl/workbook.xml';
+    const firstSheet = firstByName(xml(wbPath), 'sheet');
+    if(!firstSheet) return byRow;
+    const sheetPath = rels(wbPath)[relAttr(firstSheet, 'id')];
+    const sheetDoc = sheetPath && xml(sheetPath);
+    if(!sheetDoc) return byRow;
+    const sheetRels = rels(sheetPath);
+
+    // 1) Fotos flotantes ancladas a una celda.
+    if(byName(sheetDoc, 'drawing').length) byRow.info.formatos.push('flotantes');
+    byName(sheetDoc, 'drawing').forEach(d => {
+      const drawingPath = sheetRels[relAttr(d, 'id')];
+      if(!drawingPath) return;
+      const drawingRels = rels(drawingPath);
+      ['twoCellAnchor', 'oneCellAnchor'].forEach(tag => {
+        byName(xml(drawingPath), tag).forEach(anchor => {
+          const rowEl = firstByName(firstByName(anchor, 'from'), 'row');
+          const blip = firstByName(anchor, 'blip');
+          if(!rowEl || !blip) return;
+          const media = drawingRels[relAttr(blip, 'embed')];
+          if(media) addImage(Number(rowEl.textContent), media);
+        });
+      });
+    });
+
+    const cells = byName(sheetDoc, 'c');
+
+    // 2) Fotos dentro de la celda (Excel 365): celda con vm="n".
+    const vmCells = cells.filter(c => c.getAttribute('vm'));
+    if(vmCells.length){
+      byRow.info.formatos.push('en-celda:' + vmCells.length);
+      const meta = xml('xl/metadata.xml');
+      const future = byName(meta, 'futureMetadata').find(f => f.getAttribute('name') === 'XLRICHVALUE');
+      const futureBks = future ? byName(future, 'bk').map(bk => { const rvb = firstByName(bk, 'rvb'); return rvb ? Number(rvb.getAttribute('i')) : null; }) : [];
+      const valueBks = byName(firstByName(meta, 'valueMetadata'), 'bk').map(bk => { const rc = firstByName(bk, 'rc'); return rc ? Number(rc.getAttribute('v')) : null; });
+      const structures = byName(xml('xl/richdata/rdrichvaluestructure.xml'), 's').map(s => {
+        const keys = byName(s, 'k').map(k => k.getAttribute('n'));
+        const web = keys.indexOf('WebImageIdentifier');
+        if(s.getAttribute('t') === '_webimage' && web >= 0) return { web: true, idx: web };
+        const idx = keys.indexOf('_rvRel:LocalImageIdentifier');
+        return { web: false, idx: idx >= 0 ? idx : 0 };
+      });
+      const richValues = byName(xml('xl/richdata/rdrichvalue.xml'), 'rv').map(rv => {
+        const vals = byName(rv, 'v').map(v => Number(v.textContent));
+        const st = structures[Number(rv.getAttribute('s')) || 0] || { web: false, idx: 0 };
+        return { web: st.web, i: vals[st.idx] };
+      });
+      const webPath = 'xl/richdata/rdrichvaluewebimage.xml';
+      const webRels = rels(webPath);
+      const webUrls = byName(xml(webPath), 'webImageSrd').map(w => {
+        const addr = firstByName(w, 'address');
+        return addr ? webRels[relAttr(addr, 'id')] : null;
+      });
+      const relPath = 'xl/richdata/richvaluerel.xml';
+      const relIds = byName(xml(relPath), 'rel').map(r => relAttr(r, 'id'));
+      const relTargets = rels(relPath);
+      vmCells.forEach(c => {
+        const vm = Number(c.getAttribute('vm')) - 1;
+        const fb = valueBks[vm];
+        const rvIndex = (fb != null && futureBks[fb] != null) ? futureBks[fb] : vm;
+        const value = richValues[rvIndex];
+        if(!value) return;
+        if(value.web){ addUrl(rowOfRef(c.getAttribute('r')), webUrls[value.i]); return; }
+        const media = relTargets[relIds[value.i]];
+        if(media) addImage(rowOfRef(c.getAttribute('r')), media);
+      });
+    }
+
+    // 3) Fórmula =IMAGEN("https://…") (en el archivo se guarda como _xlfn.IMAGE).
+    cells.forEach(c => {
+      const row = rowOfRef(c.getAttribute('r'));
+      if(byRow.has(row)) return; // ya se encontró por la vía anterior
+      const f = firstByName(c, 'f');
+      const m = f && /IMAGEN?\(\s*"([^"]+)"/i.exec(f.textContent);
+      if(m) addUrl(row, m[1]);
+    });
+
+    // 4) Fotos de WPS Office: =DISPIMG("ID_…",1)
+    const dispCells = cells.map(c => {
+      const f = firstByName(c, 'f'), v = firstByName(c, 'v');
+      const m = /DISPIMG\(\s*"([^"]+)"/i.exec((f && f.textContent) || (v && v.textContent) || '');
+      return m ? { row: rowOfRef(c.getAttribute('r')), id: m[1] } : null;
+    }).filter(Boolean);
+    if(dispCells.length){
+      byRow.info.formatos.push('wps:' + dispCells.length);
+      const ciPath = 'xl/cellimages.xml';
+      const ciRels = rels(ciPath);
+      const mediaById = {};
+      byName(xml(ciPath), 'pic').forEach(pic => {
+        const nv = firstByName(pic, 'cNvPr'), blip = firstByName(pic, 'blip');
+        if(nv && blip) mediaById[nv.getAttribute('name')] = ciRels[relAttr(blip, 'embed')];
+      });
+      dispCells.forEach(({ row, id }) => { if(mediaById[id]) addImage(row, mediaById[id]); });
+    }
+
+    return byRow;
+  }
+
+  // Sube las fotos del Excel como prueba de entrega de cada despacho importado.
+  async function uploadExcelPhotos(pending){
+    let done = 0, failed = 0, firstError = '';
+    for(const { rowId, blob } of pending){
+      setSync('saving', `Subiendo fotos de respaldo ${done + failed + 1}/${pending.length}…`);
+      try{
+        let up;
+        if(blob.url) up = { url: blob.url, path: '' };
+        else{
+          const jpg = await compressImage(blob);
+          up = await uploadBlob('hojasDeRuta/' + HOJA_ID + '/' + rowId + '/foto-excel-' + Date.now() + '.jpg', jpg, 'image/jpeg');
+        }
+        // Se busca la fila recién ahora: mientras subía pudo llegar una versión nueva de la hoja.
+        const row = state.rows.find(r => r.id === rowId);
+        if(!row){ failed++; firstError = firstError || 'el despacho ya no está en la lista'; continue; }
+        row.entrega = Object.assign({}, row.entrega || {}, {
+          fotoUrl: up.url,
+          fotoPath: up.path,
+          registradoPor: (auth && auth.currentUser && auth.currentUser.email) || '',
+          registradoAt: new Date().toISOString(),
+          origen: 'excel'
+        });
+        done++;
+        renderRows();
+        commit();
+      }catch(err){
+        console.error(err);
+        failed++;
+        firstError = firstError || [err && err.code, err && err.message].filter(Boolean).join(' — ') || String(err);
+      }
+    }
+    return { done, failed, firstError };
+  }
+
+  // Mensajes y preguntas dentro de la página. Se usan en lugar de alert()/confirm()
+  // porque Chrome deja de mostrar esos avisos si una página muestra muchos seguidos
+  // (y entonces confirm() responde "Cancelar" solo, sin que la persona lo vea).
+  function showDialog(message, buttons){
+    buttons = buttons || [{ label: 'Aceptar', primary: true }];
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'app-dialog';
+      const box = document.createElement('div');
+      box.className = 'app-dialog-box';
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-modal', 'true');
+      const msg = document.createElement('p');
+      msg.className = 'app-dialog-msg';
+      msg.textContent = message;
+      const btns = document.createElement('div');
+      btns.className = 'app-dialog-btns';
+      buttons.forEach((b, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = b.label;
+        if(b.primary) btn.className = 'primary';
+        btn.addEventListener('click', () => { overlay.remove(); resolve(i); });
+        btns.appendChild(btn);
+      });
+      box.appendChild(msg);
+      box.appendChild(btns);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      const primary = btns.querySelector('button.primary') || btns.querySelector('button');
+      if(primary) primary.focus();
+    });
   }
 
   const excelFileInput = $('excelFileInput');
@@ -2585,37 +2881,126 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     const file = ev.target.files[0];
     if(!file) return;
     if(typeof XLSX === 'undefined'){
-      alert('No se pudo cargar el lector de Excel — revisá tu conexión a internet e intentá de nuevo en unos segundos.');
+      showDialog('No se pudo cargar el lector de Excel — revisá tu conexión a internet e intentá de nuevo en unos segundos.');
       excelFileInput.value = '';
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try{
         const data = new Uint8Array(reader.result);
+        const isXlsx = data[0] === 0x50 && data[1] === 0x4B; // "PK": .xlsx/.xlsm son un ZIP
         const wb = XLSX.read(data, { type: 'array' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         const records = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-        const imported = records
-          .map(rowFromExcelRecord)
-          .filter(r => r.cliente || r.direccion);
+        let imagesByRow = new Map();
+        if(isXlsx){
+          try{ imagesByRow = extractExcelImagesByRow(data); }
+          catch(e){ console.error('No se pudieron leer las fotos del Excel', e); }
+        }
+        // Cada despacho se queda con la primera foto de su fila en la hoja.
+        const pendingPhotos = [];
+        const imported = [];
+        records.forEach(record => {
+          const row = rowFromExcelRecord(record);
+          if(!(row.cliente || row.direccion)) return;
+          imported.push(row);
+          const fotos = imagesByRow.get(record.__rowNum__);
+          if(fotos && fotos.length) pendingPhotos.push({ rowId: row.id, blob: fotos[0] });
+        });
 
         if(!imported.length){
-          alert('No se encontraron despachos para importar. Revisá que el Excel tenga columnas como Cliente, Dirección, Comuna, Contacto, Productos, Hora y Tarifa, con datos debajo de esa fila de encabezados.');
+          showDialog('No se encontraron despachos para importar. Revisá que el Excel tenga columnas como Cliente, Dirección, Comuna, Contacto, Productos, Hora y Tarifa, con datos debajo de esa fila de encabezados.');
           return;
         }
 
-        const reemplazar = confirm(
-          `Se encontraron ${imported.length} despacho(s) en el archivo.\n\n` +
-          `Aceptar = reemplazar la lista actual por estos.\n` +
-          `Cancelar = agregarlos al final de la lista actual.`
+        // Un despacho del archivo que ya está en la lista (mismo cliente y dirección) se
+        // actualiza en su lugar, conservando su id y lo que registró el chofer, en vez de duplicarse.
+        const keyOf = r => normalizeHeaderText(r.cliente).replace(/\s+/g, ' ') + '|' + normalizeHeaderText(r.direccion).replace(/\s+/g, ' ');
+        const pool = new Map();
+        state.rows.forEach(r => {
+          if(!(r.cliente || r.direccion)) return;
+          const k = keyOf(r);
+          if(!pool.has(k)) pool.set(k, []);
+          pool.get(k).push(r);
+        });
+        const matchedIds = new Set();
+        const merged = imported.map(nuevo => {
+          const candidatos = pool.get(keyOf(nuevo));
+          const existente = candidatos && candidatos.shift();
+          if(!existente) return nuevo;
+          matchedIds.add(existente.id);
+          const actualizado = Object.assign({}, existente);
+          nuevo._campos.forEach(f => { if(f !== 'horaEntrega') actualizado[f] = nuevo[f]; });
+          if(nuevo.entrega) actualizado.entrega = Object.assign({}, existente.entrega || {}, nuevo.entrega);
+          if(actualizado.direccion !== existente.direccion){ delete actualizado.lat; delete actualizado.lng; }
+          pendingPhotos.forEach(ph => { if(ph.rowId === nuevo.id) ph.rowId = existente.id; });
+          return actualizado;
+        });
+        const yaEstaban = matchedIds.size, nuevos = merged.length - yaEstaban;
+        const sinCambios = state.rows.filter(r => !matchedIds.has(r.id) && (r.cliente || r.direccion)).length;
+
+        // Copias repetidas que ya estaban en la lista (por ejemplo, de una importación
+        // anterior que agregó al final): se quitan siempre. Si alguna tenía datos del
+        // chofer que el despacho que queda no tiene, se conservan en el que queda.
+        const sobrantes = new Set();
+        merged.forEach(r => {
+          if(!matchedIds.has(r.id)) return;
+          const resto = pool.get(keyOf(r)) || [];
+          while(resto.length){
+            const dup = resto.shift();
+            sobrantes.add(dup.id);
+            if(dup.entrega) r.entrega = Object.assign({}, dup.entrega, r.entrega || {});
+            if(dup.pagado && !r.pagado) r.pagado = true;
+          }
+        });
+
+        const fotosTxt = pendingPhotos.length ? ` (${pendingPhotos.length} con foto de respaldo)` : '';
+        const opcion = await showDialog(
+          `Se encontraron ${imported.length} despacho(s) en el archivo${fotosTxt}.` +
+          (yaEstaban ? `\n${yaEstaban} ya estaban en la lista y se actualizarán (no se duplican).` : '') +
+          (sobrantes.size ? `\nSe quitarán ${sobrantes.size} copia(s) repetida(s).` : '') +
+          (sinCambios - sobrantes.size > 0 ? `\n\n«Dejar la lista igual al archivo» también quita ${sinCambios - sobrantes.size} despacho(s) que no vienen en el archivo.` : '') +
+          `\n\n¿Qué querés hacer?`,
+          [
+            { label: 'Cancelar' },
+            { label: nuevos ? `Actualizar y agregar ${nuevos} nuevo(s)` : 'Actualizar los que ya están' },
+            { label: 'Dejar la lista igual al archivo', primary: true }
+          ]
         );
-        state.rows = reemplazar ? imported : state.rows.concat(imported);
+        if(opcion === 0) return;
+        if(opcion === 2) state.rows = merged;
+        else{
+          const porId = new Map(merged.filter(r => matchedIds.has(r.id)).map(r => [r.id, r]));
+          state.rows = state.rows
+            .filter(r => !sobrantes.has(r.id))
+            .map(r => porId.get(r.id) || r)
+            .concat(merged.filter(r => !matchedIds.has(r.id)));
+        }
+        if(!state.rows.length) state.rows = [defaultRow()];
         commit();
         renderRows();
-        alert(`Se importaron ${imported.length} despacho(s) correctamente.`);
+
+        if(!pendingPhotos.length){
+          const info = imagesByRow.info;
+          let nota = '';
+          if(!isXlsx) nota = '\n\nEste archivo no es .xlsx, así que no puede traer fotos. Guardalo como "Libro de Excel (.xlsx)" para importar las fotos de respaldo.';
+          else if(info && info.media) nota = `\n\nEl archivo trae ${info.media} imagen(es), pero no se pudo ubicar a qué fila corresponde cada una, así que no se importaron. (Detalle: ${info.formatos.join(', ') || 'sin anclaje'})`;
+          showDialog(`Se importaron ${imported.length} despacho(s) correctamente.` + nota);
+          return;
+        }
+        if(!firebaseReady){
+          showDialog(`Se importaron ${imported.length} despacho(s), pero las ${pendingPhotos.length} foto(s) de respaldo no se pudieron guardar porque no hay conexión con la base de datos. Ingresá con tu correo y volvé a importar el Excel.`);
+          return;
+        }
+        const { done, failed, firstError } = await uploadExcelPhotos(pendingPhotos);
+        setSync(failed ? 'err' : 'ok', failed ? 'Algunas fotos no se subieron' : 'Sincronizado');
+        showDialog(
+          `Se importaron ${imported.length} despacho(s) y ${done} foto(s) de respaldo como prueba de entrega.` +
+          (failed ? `\n\n${failed} foto(s) no se pudieron subir.\nMotivo: ${firstError}` : '')
+        );
       }catch(e){
-        alert('No se pudo leer el archivo. Asegurate de que sea un Excel (.xlsx) o CSV válido.');
+        showDialog('No se pudo leer el archivo. Asegurate de que sea un Excel (.xlsx) o CSV válido.');
       }
     };
     reader.readAsArrayBuffer(file);
