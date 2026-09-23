@@ -2602,10 +2602,14 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
   function rowFromExcelRecord(record){
     const row = defaultRow();
+    // Qué campos trajo el archivo (no se guarda): al actualizar un despacho que ya
+    // existe solo se pisan estos, y se conserva lo demás (pagado, factura, firma…).
+    Object.defineProperty(row, '_campos', { value: new Set(), enumerable: false });
     Object.keys(record).forEach(header => {
       const field = fieldForHeader(header);
       if(!field) return;
       const raw = record[header];
+      row._campos.add(field);
       if(field === 'tarifa') row.tarifa = parseTarifaValue(raw);
       else if(field === 'estado') row.estado = estadoFromText(raw);
       else if(field === 'horaEntrega'){
@@ -2780,7 +2784,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
   // Sube las fotos del Excel como prueba de entrega de cada despacho importado.
   async function uploadExcelPhotos(pending){
-    let done = 0, failed = 0;
+    let done = 0, failed = 0, firstError = '';
     for(const { rowId, blob } of pending){
       setSync('saving', `Subiendo fotos de respaldo ${done + failed + 1}/${pending.length}…`);
       try{
@@ -2792,7 +2796,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
         }
         // Se busca la fila recién ahora: mientras subía pudo llegar una versión nueva de la hoja.
         const row = state.rows.find(r => r.id === rowId);
-        if(!row){ failed++; continue; }
+        if(!row){ failed++; firstError = firstError || 'el despacho ya no está en la lista'; continue; }
         row.entrega = Object.assign({}, row.entrega || {}, {
           fotoUrl: up.url,
           fotoPath: up.path,
@@ -2806,9 +2810,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       }catch(err){
         console.error(err);
         failed++;
+        firstError = firstError || [err && err.code, err && err.message].filter(Boolean).join(' — ') || String(err);
       }
     }
-    return { done, failed };
+    return { done, failed, firstError };
   }
 
   const excelFileInput = $('excelFileInput');
@@ -2850,13 +2855,45 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
           return;
         }
 
+        // Un despacho del archivo que ya está en la lista (mismo cliente y dirección) se
+        // actualiza en su lugar, conservando su id y lo que registró el chofer, en vez de duplicarse.
+        const keyOf = r => normalizeHeaderText(r.cliente).replace(/\s+/g, ' ') + '|' + normalizeHeaderText(r.direccion).replace(/\s+/g, ' ');
+        const pool = new Map();
+        state.rows.forEach(r => {
+          if(!(r.cliente || r.direccion)) return;
+          const k = keyOf(r);
+          if(!pool.has(k)) pool.set(k, []);
+          pool.get(k).push(r);
+        });
+        const matchedIds = new Set();
+        const merged = imported.map(nuevo => {
+          const candidatos = pool.get(keyOf(nuevo));
+          const existente = candidatos && candidatos.shift();
+          if(!existente) return nuevo;
+          matchedIds.add(existente.id);
+          const actualizado = Object.assign({}, existente);
+          nuevo._campos.forEach(f => { if(f !== 'horaEntrega') actualizado[f] = nuevo[f]; });
+          if(nuevo.entrega) actualizado.entrega = Object.assign({}, existente.entrega || {}, nuevo.entrega);
+          if(actualizado.direccion !== existente.direccion){ delete actualizado.lat; delete actualizado.lng; }
+          pendingPhotos.forEach(ph => { if(ph.rowId === nuevo.id) ph.rowId = existente.id; });
+          return actualizado;
+        });
+        const yaEstaban = matchedIds.size, nuevos = merged.length - yaEstaban;
+        const sinCambios = state.rows.filter(r => !matchedIds.has(r.id) && (r.cliente || r.direccion)).length;
+
         const fotosTxt = pendingPhotos.length ? ` (${pendingPhotos.length} con foto de respaldo)` : '';
         const reemplazar = confirm(
-          `Se encontraron ${imported.length} despacho(s) en el archivo${fotosTxt}.\n\n` +
-          `Aceptar = reemplazar la lista actual por estos.\n` +
-          `Cancelar = agregarlos al final de la lista actual.`
+          `Se encontraron ${imported.length} despacho(s) en el archivo${fotosTxt}.\n` +
+          (yaEstaban ? `${yaEstaban} ya estaban en la lista y se actualizarán (no se duplican).\n` : '') +
+          `\nAceptar = dejar la lista igual al archivo` + (sinCambios ? ` (se quitan los ${sinCambios} despacho(s) que no vienen en el archivo).` : '.') + `\n` +
+          `Cancelar = actualizar los que ya están y agregar ${nuevos ? 'los ' + nuevos + ' nuevos' : 'solo los nuevos'} al final.`
         );
-        state.rows = reemplazar ? imported : state.rows.concat(imported);
+        if(reemplazar) state.rows = merged;
+        else{
+          const porId = new Map(merged.filter(r => matchedIds.has(r.id)).map(r => [r.id, r]));
+          state.rows = state.rows.map(r => porId.get(r.id) || r).concat(merged.filter(r => !matchedIds.has(r.id)));
+        }
+        if(!state.rows.length) state.rows = [defaultRow()];
         commit();
         renderRows();
 
@@ -2872,11 +2909,11 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
           alert(`Se importaron ${imported.length} despacho(s), pero las ${pendingPhotos.length} foto(s) de respaldo no se pudieron guardar porque no hay conexión con la base de datos. Ingresá con tu correo y volvé a importar el Excel.`);
           return;
         }
-        const { done, failed } = await uploadExcelPhotos(pendingPhotos);
+        const { done, failed, firstError } = await uploadExcelPhotos(pendingPhotos);
         setSync(failed ? 'err' : 'ok', failed ? 'Algunas fotos no se subieron' : 'Sincronizado');
         alert(
           `Se importaron ${imported.length} despacho(s) y ${done} foto(s) de respaldo como prueba de entrega.` +
-          (failed ? `\n\n${failed} foto(s) no se pudieron subir. Podés agregarlas a mano desde Entregas.` : '')
+          (failed ? `\n\n${failed} foto(s) no se pudieron subir.\nMotivo: ${firstError}` : '')
         );
       }catch(e){
         alert('No se pudo leer el archivo. Asegurate de que sea un Excel (.xlsx) o CSV válido.');
