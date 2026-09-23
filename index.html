@@ -2655,7 +2655,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     const rels = path => {
       const map = {};
       const doc = xml(dirOf(path) + '_rels/' + path.slice(dirOf(path).length) + '.rels');
-      byName(doc, 'Relationship').forEach(r => { map[r.getAttribute('Id')] = resolve(path, r.getAttribute('Target')); });
+      byName(doc, 'Relationship').forEach(r => {
+        const target = r.getAttribute('Target');
+        map[r.getAttribute('Id')] = r.getAttribute('TargetMode') === 'External' ? target : resolve(path, target);
+      });
       return map;
     };
     const addImage = (row, mediaPath) => {
@@ -2667,6 +2670,12 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       }
       if(!byRow.has(row)) byRow.set(row, []);
       byRow.get(row).push(new Blob([bytes], { type: mime }));
+    };
+    // Foto que está en internet (fórmula =IMAGEN("https://…")): se guarda el enlace tal cual.
+    const addUrl = (row, url) => {
+      if(row < 0 || !/^https?:\/\//i.test(url || '')) return;
+      if(!byRow.has(row)) byRow.set(row, []);
+      byRow.get(row).push({ url });
     };
     const rowOfRef = ref => { const m = /\d+/.exec(ref || ''); return m ? Number(m[0]) - 1 : -1; };
 
@@ -2708,12 +2717,21 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       const valueBks = byName(firstByName(meta, 'valueMetadata'), 'bk').map(bk => { const rc = firstByName(bk, 'rc'); return rc ? Number(rc.getAttribute('v')) : null; });
       const structures = byName(xml('xl/richdata/rdrichvaluestructure.xml'), 's').map(s => {
         const keys = byName(s, 'k').map(k => k.getAttribute('n'));
+        const web = keys.indexOf('WebImageIdentifier');
+        if(s.getAttribute('t') === '_webimage' && web >= 0) return { web: true, idx: web };
         const idx = keys.indexOf('_rvRel:LocalImageIdentifier');
-        return idx >= 0 ? idx : 0;
+        return { web: false, idx: idx >= 0 ? idx : 0 };
       });
       const richValues = byName(xml('xl/richdata/rdrichvalue.xml'), 'rv').map(rv => {
         const vals = byName(rv, 'v').map(v => Number(v.textContent));
-        return vals[structures[Number(rv.getAttribute('s')) || 0] || 0];
+        const st = structures[Number(rv.getAttribute('s')) || 0] || { web: false, idx: 0 };
+        return { web: st.web, i: vals[st.idx] };
+      });
+      const webPath = 'xl/richdata/rdrichvaluewebimage.xml';
+      const webRels = rels(webPath);
+      const webUrls = byName(xml(webPath), 'webImageSrd').map(w => {
+        const addr = firstByName(w, 'address');
+        return addr ? webRels[relAttr(addr, 'id')] : null;
       });
       const relPath = 'xl/richdata/richvaluerel.xml';
       const relIds = byName(xml(relPath), 'rel').map(r => relAttr(r, 'id'));
@@ -2722,13 +2740,24 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
         const vm = Number(c.getAttribute('vm')) - 1;
         const fb = valueBks[vm];
         const rvIndex = (fb != null && futureBks[fb] != null) ? futureBks[fb] : vm;
-        const relIndex = richValues[rvIndex];
-        const media = relIndex != null ? relTargets[relIds[relIndex]] : null;
+        const value = richValues[rvIndex];
+        if(!value) return;
+        if(value.web){ addUrl(rowOfRef(c.getAttribute('r')), webUrls[value.i]); return; }
+        const media = relTargets[relIds[value.i]];
         if(media) addImage(rowOfRef(c.getAttribute('r')), media);
       });
     }
 
-    // 3) Fotos de WPS Office: =DISPIMG("ID_…",1)
+    // 3) Fórmula =IMAGEN("https://…") (en el archivo se guarda como _xlfn.IMAGE).
+    cells.forEach(c => {
+      const row = rowOfRef(c.getAttribute('r'));
+      if(byRow.has(row)) return; // ya se encontró por la vía anterior
+      const f = firstByName(c, 'f');
+      const m = f && /IMAGEN?\(\s*"([^"]+)"/i.exec(f.textContent);
+      if(m) addUrl(row, m[1]);
+    });
+
+    // 4) Fotos de WPS Office: =DISPIMG("ID_…",1)
     const dispCells = cells.map(c => {
       const f = firstByName(c, 'f'), v = firstByName(c, 'v');
       const m = /DISPIMG\(\s*"([^"]+)"/i.exec((f && f.textContent) || (v && v.textContent) || '');
@@ -2755,8 +2784,12 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     for(const { rowId, blob } of pending){
       setSync('saving', `Subiendo fotos de respaldo ${done + failed + 1}/${pending.length}…`);
       try{
-        const jpg = await compressImage(blob);
-        const up = await uploadBlob('hojasDeRuta/' + HOJA_ID + '/' + rowId + '/foto-excel-' + Date.now() + '.jpg', jpg, 'image/jpeg');
+        let up;
+        if(blob.url) up = { url: blob.url, path: '' };
+        else{
+          const jpg = await compressImage(blob);
+          up = await uploadBlob('hojasDeRuta/' + HOJA_ID + '/' + rowId + '/foto-excel-' + Date.now() + '.jpg', jpg, 'image/jpeg');
+        }
         // Se busca la fila recién ahora: mientras subía pudo llegar una versión nueva de la hoja.
         const row = state.rows.find(r => r.id === rowId);
         if(!row){ failed++; continue; }
