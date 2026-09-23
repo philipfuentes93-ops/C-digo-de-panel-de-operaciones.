@@ -118,6 +118,27 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .login-box input:focus{ outline:none; border-color:var(--accent); }
   .login-box .row-btns{ display:flex; gap:8px; margin-top:6px; }
   .login-box button{ flex:1; }
+  .app-dialog{
+    position:fixed;
+    inset:0;
+    background:rgba(15,76,92,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:60;
+  }
+  .app-dialog[hidden]{ display:none; }
+  .app-dialog-box{
+    background:#fff;
+    border-radius:16px;
+    padding:24px 22px 18px;
+    max-width:460px;
+    width:100%;
+    box-shadow:0 20px 50px rgba(15,76,92,0.35);
+  }
+  .app-dialog-msg{ margin:0 0 18px; font-size:14px; line-height:1.55; color:var(--text); white-space:pre-line; }
+  .app-dialog-btns{ display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
   .login-err{ color:var(--bad); font-size:12.5px; margin-top:12px; min-height:16px; }
 
   /* ---------- App shell ---------- */
@@ -2821,13 +2842,46 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     return { done, failed, firstError };
   }
 
+  // Mensajes y preguntas dentro de la página. Se usan en lugar de alert()/confirm()
+  // porque Chrome deja de mostrar esos avisos si una página muestra muchos seguidos
+  // (y entonces confirm() responde "Cancelar" solo, sin que la persona lo vea).
+  function showDialog(message, buttons){
+    buttons = buttons || [{ label: 'Aceptar', primary: true }];
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'app-dialog';
+      const box = document.createElement('div');
+      box.className = 'app-dialog-box';
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-modal', 'true');
+      const msg = document.createElement('p');
+      msg.className = 'app-dialog-msg';
+      msg.textContent = message;
+      const btns = document.createElement('div');
+      btns.className = 'app-dialog-btns';
+      buttons.forEach((b, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = b.label;
+        if(b.primary) btn.className = 'primary';
+        btn.addEventListener('click', () => { overlay.remove(); resolve(i); });
+        btns.appendChild(btn);
+      });
+      box.appendChild(msg);
+      box.appendChild(btns);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      const primary = btns.querySelector('button.primary') || btns.querySelector('button');
+      if(primary) primary.focus();
+    });
+  }
+
   const excelFileInput = $('excelFileInput');
   $('btnImportExcel').addEventListener('click', () => excelFileInput.click());
   excelFileInput.addEventListener('change', (ev) => {
     const file = ev.target.files[0];
     if(!file) return;
     if(typeof XLSX === 'undefined'){
-      alert('No se pudo cargar el lector de Excel — revisá tu conexión a internet e intentá de nuevo en unos segundos.');
+      showDialog('No se pudo cargar el lector de Excel — revisá tu conexión a internet e intentá de nuevo en unos segundos.');
       excelFileInput.value = '';
       return;
     }
@@ -2856,7 +2910,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
         });
 
         if(!imported.length){
-          alert('No se encontraron despachos para importar. Revisá que el Excel tenga columnas como Cliente, Dirección, Comuna, Contacto, Productos, Hora y Tarifa, con datos debajo de esa fila de encabezados.');
+          showDialog('No se encontraron despachos para importar. Revisá que el Excel tenga columnas como Cliente, Dirección, Comuna, Contacto, Productos, Hora y Tarifa, con datos debajo de esa fila de encabezados.');
           return;
         }
 
@@ -2886,17 +2940,42 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
         const yaEstaban = matchedIds.size, nuevos = merged.length - yaEstaban;
         const sinCambios = state.rows.filter(r => !matchedIds.has(r.id) && (r.cliente || r.direccion)).length;
 
+        // Copias repetidas que ya estaban en la lista (por ejemplo, de una importación
+        // anterior que agregó al final): se quitan siempre. Si alguna tenía datos del
+        // chofer que el despacho que queda no tiene, se conservan en el que queda.
+        const sobrantes = new Set();
+        merged.forEach(r => {
+          if(!matchedIds.has(r.id)) return;
+          const resto = pool.get(keyOf(r)) || [];
+          while(resto.length){
+            const dup = resto.shift();
+            sobrantes.add(dup.id);
+            if(dup.entrega) r.entrega = Object.assign({}, dup.entrega, r.entrega || {});
+            if(dup.pagado && !r.pagado) r.pagado = true;
+          }
+        });
+
         const fotosTxt = pendingPhotos.length ? ` (${pendingPhotos.length} con foto de respaldo)` : '';
-        const reemplazar = confirm(
-          `Se encontraron ${imported.length} despacho(s) en el archivo${fotosTxt}.\n` +
-          (yaEstaban ? `${yaEstaban} ya estaban en la lista y se actualizarán (no se duplican).\n` : '') +
-          `\nAceptar = dejar la lista igual al archivo` + (sinCambios ? ` (se quitan los ${sinCambios} despacho(s) que no vienen en el archivo).` : '.') + `\n` +
-          `Cancelar = actualizar los que ya están y agregar ${nuevos ? 'los ' + nuevos + ' nuevos' : 'solo los nuevos'} al final.`
+        const opcion = await showDialog(
+          `Se encontraron ${imported.length} despacho(s) en el archivo${fotosTxt}.` +
+          (yaEstaban ? `\n${yaEstaban} ya estaban en la lista y se actualizarán (no se duplican).` : '') +
+          (sobrantes.size ? `\nSe quitarán ${sobrantes.size} copia(s) repetida(s).` : '') +
+          (sinCambios - sobrantes.size > 0 ? `\n\n«Dejar la lista igual al archivo» también quita ${sinCambios - sobrantes.size} despacho(s) que no vienen en el archivo.` : '') +
+          `\n\n¿Qué querés hacer?`,
+          [
+            { label: 'Cancelar' },
+            { label: nuevos ? `Actualizar y agregar ${nuevos} nuevo(s)` : 'Actualizar los que ya están' },
+            { label: 'Dejar la lista igual al archivo', primary: true }
+          ]
         );
-        if(reemplazar) state.rows = merged;
+        if(opcion === 0) return;
+        if(opcion === 2) state.rows = merged;
         else{
           const porId = new Map(merged.filter(r => matchedIds.has(r.id)).map(r => [r.id, r]));
-          state.rows = state.rows.map(r => porId.get(r.id) || r).concat(merged.filter(r => !matchedIds.has(r.id)));
+          state.rows = state.rows
+            .filter(r => !sobrantes.has(r.id))
+            .map(r => porId.get(r.id) || r)
+            .concat(merged.filter(r => !matchedIds.has(r.id)));
         }
         if(!state.rows.length) state.rows = [defaultRow()];
         commit();
@@ -2907,21 +2986,21 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
           let nota = '';
           if(!isXlsx) nota = '\n\nEste archivo no es .xlsx, así que no puede traer fotos. Guardalo como "Libro de Excel (.xlsx)" para importar las fotos de respaldo.';
           else if(info && info.media) nota = `\n\nEl archivo trae ${info.media} imagen(es), pero no se pudo ubicar a qué fila corresponde cada una, así que no se importaron. (Detalle: ${info.formatos.join(', ') || 'sin anclaje'})`;
-          alert(`Se importaron ${imported.length} despacho(s) correctamente.` + nota);
+          showDialog(`Se importaron ${imported.length} despacho(s) correctamente.` + nota);
           return;
         }
         if(!firebaseReady){
-          alert(`Se importaron ${imported.length} despacho(s), pero las ${pendingPhotos.length} foto(s) de respaldo no se pudieron guardar porque no hay conexión con la base de datos. Ingresá con tu correo y volvé a importar el Excel.`);
+          showDialog(`Se importaron ${imported.length} despacho(s), pero las ${pendingPhotos.length} foto(s) de respaldo no se pudieron guardar porque no hay conexión con la base de datos. Ingresá con tu correo y volvé a importar el Excel.`);
           return;
         }
         const { done, failed, firstError } = await uploadExcelPhotos(pendingPhotos);
         setSync(failed ? 'err' : 'ok', failed ? 'Algunas fotos no se subieron' : 'Sincronizado');
-        alert(
+        showDialog(
           `Se importaron ${imported.length} despacho(s) y ${done} foto(s) de respaldo como prueba de entrega.` +
           (failed ? `\n\n${failed} foto(s) no se pudieron subir.\nMotivo: ${firstError}` : '')
         );
       }catch(e){
-        alert('No se pudo leer el archivo. Asegurate de que sea un Excel (.xlsx) o CSV válido.');
+        showDialog('No se pudo leer el archivo. Asegurate de que sea un Excel (.xlsx) o CSV válido.');
       }
     };
     reader.readAsArrayBuffer(file);
