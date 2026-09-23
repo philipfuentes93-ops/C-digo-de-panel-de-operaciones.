@@ -244,6 +244,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     min-width:0;
     padding:26px 32px 40px;
     max-width:1300px;
+    margin:0 auto;
+    width:100%;
   }
 
   .sync-banner{
@@ -858,6 +860,27 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     .content{ padding:18px 16px 32px; }
     .summary-card{ gap:14px 24px; }
     .kpi-bar{ padding:14px 16px; }
+    .sidebar{ width:60px; padding:14px 0; gap:16px; }
+    .nav-item{ width:38px; height:38px; }
+    .nav-item .nav-icon{ font-size:16px; }
+    .sidebar-logo .badge{ width:32px; height:32px; font-size:16px; }
+    .nav-flyout{ left:48px; }
+    #mapView{ height:360px; }
+  }
+
+  @media (max-width:480px){
+    .content{ padding:14px 10px 28px; }
+    .content-header h1{ font-size:19px; }
+    .content-header p{ display:none; }
+    .kpi-bar{ padding:12px; gap:12px 18px; }
+    .kpi-progress{ min-width:100%; order:-1; }
+    .summary-card{ padding:14px 16px; gap:12px 20px; }
+    .field{ min-width:130px; }
+    .field.grow{ min-width:100%; }
+    #mapView{ height:240px; }
+    .chofer-card{ padding:13px 14px 15px; }
+    .chofer-card-meta, .chofer-card-actions{ padding-left:0; }
+    .toolbar button{ font-size:12px; padding:8px 12px; }
   }
 </style>
 </head>
