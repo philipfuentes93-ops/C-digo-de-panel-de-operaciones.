@@ -547,6 +547,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     -webkit-appearance:none;
     text-align:center;
     width:100%;
+    min-width:108px;
   }
   select.estado.pendiente{ background:var(--pend-bg); color:var(--pend); }
   select.estado.en-ruta{ background:var(--warn-bg); color:var(--warn); }
@@ -1040,7 +1041,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
     </div>
     <p class="footer-note" style="margin:-8px 0 6px;">
-      El Excel debe traer las columnas <strong>Cliente, Dirección, Comuna, Contacto, Productos</strong> y, si querés, <strong>Estado</strong> — son los datos que vos cargás. <strong>Hora de entrega</strong> y <strong>Prueba de Entrega</strong> las completa el chofer en el panel <strong>Entregas</strong>, no se cargan acá.
+      El Excel debe traer las columnas <strong>Cliente, Dirección, Comuna, Contacto, Productos</strong> y, si querés, <strong>Estado</strong> — son los datos que vos cargás. Si el Excel trae <strong>fotos de respaldo</strong> en alguna columna, se guardan como foto de prueba de entrega del despacho de esa fila. <strong>Hora de entrega</strong> y <strong>Prueba de Entrega</strong> las completa el chofer en el panel <strong>Entregas</strong>, no se cargan acá.
     </p>
     <details class="advanced-options">
       <summary>Opciones avanzadas (JSON / CSV)</summary>
@@ -2601,6 +2602,159 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     return row;
   }
 
+  // ---------- Fotos dentro del Excel (columna de respaldo) ----------
+  // Un .xlsx es un ZIP: las fotos viven en xl/media/ y otros archivos XML dicen
+  // en qué fila está cada una. Se soportan los tres formatos habituales:
+  //  1) foto flotante sobre la celda (Insertar > Imagen), vía xl/drawings/;
+  //  2) foto "dentro de la celda" de Excel 365, vía xl/richData/ + metadata.xml;
+  //  3) foto de WPS Office con fórmula DISPIMG, vía xl/cellimages.xml.
+  // Devuelve un Map { fila de la hoja (base 0) → [Blob, …] } de la primera hoja.
+  const IMG_MIME = { png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', bmp:'image/bmp', webp:'image/webp' };
+
+  function extractExcelImagesByRow(data){
+    const byRow = new Map();
+    let zip;
+    try{ zip = XLSX.CFB.read(data, { type:'array' }); }catch(e){ return byRow; }
+    const files = {};
+    zip.FullPaths.forEach((p, i) => {
+      const entry = zip.FileIndex[i];
+      if(entry && entry.content && entry.content.length) files[p.replace(/^Root Entry\//, '').toLowerCase()] = entry.content;
+    });
+    const text = path => files[path] ? new TextDecoder().decode(files[path]) : null;
+    const xml = path => { const t = text(path); return t ? new DOMParser().parseFromString(t, 'application/xml') : null; };
+    const byName = (node, name) => node ? Array.from(node.getElementsByTagName('*')).filter(n => n.localName === name) : [];
+    const firstByName = (node, name) => byName(node, name)[0] || null;
+    const relAttr = (node, name) => {
+      for(const a of Array.from(node.attributes)) if(a.localName === name) return a.value;
+      return null;
+    };
+    const dirOf = path => path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
+    const resolve = (base, target) => {
+      if(target.startsWith('/')) return target.slice(1).toLowerCase();
+      const parts = (dirOf(base) + target).split('/'), out = [];
+      parts.forEach(s => { if(s === '..') out.pop(); else if(s && s !== '.') out.push(s); });
+      return out.join('/').toLowerCase();
+    };
+    const rels = path => {
+      const map = {};
+      const doc = xml(dirOf(path) + '_rels/' + path.slice(dirOf(path).length) + '.rels');
+      byName(doc, 'Relationship').forEach(r => { map[r.getAttribute('Id')] = resolve(path, r.getAttribute('Target')); });
+      return map;
+    };
+    const addImage = (row, mediaPath) => {
+      const bytes = files[mediaPath];
+      const mime = IMG_MIME[(mediaPath.split('.').pop() || '').toLowerCase()];
+      if(!bytes || !mime || row < 0) return; // EMF/WMF/TIFF no se pueden mostrar en el navegador
+      if(!byRow.has(row)) byRow.set(row, []);
+      byRow.get(row).push(new Blob([bytes], { type: mime }));
+    };
+    const rowOfRef = ref => { const m = /\d+/.exec(ref || ''); return m ? Number(m[0]) - 1 : -1; };
+
+    // Ruta de la primera hoja (la misma que lee el importador).
+    const wbPath = 'xl/workbook.xml';
+    const firstSheet = firstByName(xml(wbPath), 'sheet');
+    if(!firstSheet) return byRow;
+    const sheetPath = rels(wbPath)[relAttr(firstSheet, 'id')];
+    const sheetDoc = sheetPath && xml(sheetPath);
+    if(!sheetDoc) return byRow;
+    const sheetRels = rels(sheetPath);
+
+    // 1) Fotos flotantes ancladas a una celda.
+    byName(sheetDoc, 'drawing').forEach(d => {
+      const drawingPath = sheetRels[relAttr(d, 'id')];
+      if(!drawingPath) return;
+      const drawingRels = rels(drawingPath);
+      ['twoCellAnchor', 'oneCellAnchor'].forEach(tag => {
+        byName(xml(drawingPath), tag).forEach(anchor => {
+          const rowEl = firstByName(firstByName(anchor, 'from'), 'row');
+          const blip = firstByName(anchor, 'blip');
+          if(!rowEl || !blip) return;
+          const media = drawingRels[relAttr(blip, 'embed')];
+          if(media) addImage(Number(rowEl.textContent), media);
+        });
+      });
+    });
+
+    const cells = byName(sheetDoc, 'c');
+
+    // 2) Fotos dentro de la celda (Excel 365): celda con vm="n".
+    const vmCells = cells.filter(c => c.getAttribute('vm'));
+    if(vmCells.length){
+      const meta = xml('xl/metadata.xml');
+      const future = byName(meta, 'futureMetadata').find(f => f.getAttribute('name') === 'XLRICHVALUE');
+      const futureBks = future ? byName(future, 'bk').map(bk => { const rvb = firstByName(bk, 'rvb'); return rvb ? Number(rvb.getAttribute('i')) : null; }) : [];
+      const valueBks = byName(firstByName(meta, 'valueMetadata'), 'bk').map(bk => { const rc = firstByName(bk, 'rc'); return rc ? Number(rc.getAttribute('v')) : null; });
+      const structures = byName(xml('xl/richdata/rdrichvaluestructure.xml'), 's').map(s => {
+        const keys = byName(s, 'k').map(k => k.getAttribute('n'));
+        const idx = keys.indexOf('_rvRel:LocalImageIdentifier');
+        return idx >= 0 ? idx : 0;
+      });
+      const richValues = byName(xml('xl/richdata/rdrichvalue.xml'), 'rv').map(rv => {
+        const vals = byName(rv, 'v').map(v => Number(v.textContent));
+        return vals[structures[Number(rv.getAttribute('s')) || 0] || 0];
+      });
+      const relPath = 'xl/richdata/richvaluerel.xml';
+      const relIds = byName(xml(relPath), 'rel').map(r => relAttr(r, 'id'));
+      const relTargets = rels(relPath);
+      vmCells.forEach(c => {
+        const vm = Number(c.getAttribute('vm')) - 1;
+        const fb = valueBks[vm];
+        const rvIndex = (fb != null && futureBks[fb] != null) ? futureBks[fb] : vm;
+        const relIndex = richValues[rvIndex];
+        const media = relIndex != null ? relTargets[relIds[relIndex]] : null;
+        if(media) addImage(rowOfRef(c.getAttribute('r')), media);
+      });
+    }
+
+    // 3) Fotos de WPS Office: =DISPIMG("ID_…",1)
+    const dispCells = cells.map(c => {
+      const f = firstByName(c, 'f'), v = firstByName(c, 'v');
+      const m = /DISPIMG\(\s*"([^"]+)"/i.exec((f && f.textContent) || (v && v.textContent) || '');
+      return m ? { row: rowOfRef(c.getAttribute('r')), id: m[1] } : null;
+    }).filter(Boolean);
+    if(dispCells.length){
+      const ciPath = 'xl/cellimages.xml';
+      const ciRels = rels(ciPath);
+      const mediaById = {};
+      byName(xml(ciPath), 'pic').forEach(pic => {
+        const nv = firstByName(pic, 'cNvPr'), blip = firstByName(pic, 'blip');
+        if(nv && blip) mediaById[nv.getAttribute('name')] = ciRels[relAttr(blip, 'embed')];
+      });
+      dispCells.forEach(({ row, id }) => { if(mediaById[id]) addImage(row, mediaById[id]); });
+    }
+
+    return byRow;
+  }
+
+  // Sube las fotos del Excel como prueba de entrega de cada despacho importado.
+  async function uploadExcelPhotos(pending){
+    let done = 0, failed = 0;
+    for(const { rowId, blob } of pending){
+      setSync('saving', `Subiendo fotos de respaldo ${done + failed + 1}/${pending.length}…`);
+      try{
+        const jpg = await compressImage(blob);
+        const up = await uploadBlob('hojasDeRuta/' + HOJA_ID + '/' + rowId + '/foto-excel-' + Date.now() + '.jpg', jpg, 'image/jpeg');
+        // Se busca la fila recién ahora: mientras subía pudo llegar una versión nueva de la hoja.
+        const row = state.rows.find(r => r.id === rowId);
+        if(!row){ failed++; continue; }
+        row.entrega = Object.assign({}, row.entrega || {}, {
+          fotoUrl: up.url,
+          fotoPath: up.path,
+          registradoPor: (auth && auth.currentUser && auth.currentUser.email) || '',
+          registradoAt: new Date().toISOString(),
+          origen: 'excel'
+        });
+        done++;
+        renderRows();
+        commit();
+      }catch(err){
+        console.error(err);
+        failed++;
+      }
+    }
+    return { done, failed };
+  }
+
   const excelFileInput = $('excelFileInput');
   $('btnImportExcel').addEventListener('click', () => excelFileInput.click());
   excelFileInput.addEventListener('change', (ev) => {
@@ -2612,30 +2766,58 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => {
+    const isXlsx = /\.xlsx$/i.test(file.name);
+    reader.onload = async () => {
       try{
         const data = new Uint8Array(reader.result);
         const wb = XLSX.read(data, { type: 'array' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         const records = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-        const imported = records
-          .map(rowFromExcelRecord)
-          .filter(r => r.cliente || r.direccion);
+        let imagesByRow = new Map();
+        if(isXlsx){
+          try{ imagesByRow = extractExcelImagesByRow(data); }
+          catch(e){ console.error('No se pudieron leer las fotos del Excel', e); }
+        }
+        // Cada despacho se queda con la primera foto de su fila en la hoja.
+        const pendingPhotos = [];
+        const imported = [];
+        records.forEach(record => {
+          const row = rowFromExcelRecord(record);
+          if(!(row.cliente || row.direccion)) return;
+          imported.push(row);
+          const fotos = imagesByRow.get(record.__rowNum__);
+          if(fotos && fotos.length) pendingPhotos.push({ rowId: row.id, blob: fotos[0] });
+        });
 
         if(!imported.length){
           alert('No se encontraron despachos para importar. Revisá que el Excel tenga columnas como Cliente, Dirección, Comuna, Contacto, Productos, Hora y Tarifa, con datos debajo de esa fila de encabezados.');
           return;
         }
 
+        const fotosTxt = pendingPhotos.length ? ` (${pendingPhotos.length} con foto de respaldo)` : '';
         const reemplazar = confirm(
-          `Se encontraron ${imported.length} despacho(s) en el archivo.\n\n` +
+          `Se encontraron ${imported.length} despacho(s) en el archivo${fotosTxt}.\n\n` +
           `Aceptar = reemplazar la lista actual por estos.\n` +
           `Cancelar = agregarlos al final de la lista actual.`
         );
         state.rows = reemplazar ? imported : state.rows.concat(imported);
         commit();
         renderRows();
-        alert(`Se importaron ${imported.length} despacho(s) correctamente.`);
+
+        if(!pendingPhotos.length){
+          alert(`Se importaron ${imported.length} despacho(s) correctamente.`);
+          return;
+        }
+        if(!firebaseReady){
+          alert(`Se importaron ${imported.length} despacho(s), pero las ${pendingPhotos.length} foto(s) de respaldo no se pudieron guardar porque no hay conexión con la base de datos. Ingresá con tu correo y volvé a importar el Excel.`);
+          return;
+        }
+        const { done, failed } = await uploadExcelPhotos(pendingPhotos);
+        setSync(failed ? 'err' : 'ok', failed ? 'Algunas fotos no se subieron' : 'Sincronizado');
+        alert(
+          `Se importaron ${imported.length} despacho(s) y ${done} foto(s) de respaldo como prueba de entrega.` +
+          (failed ? `\n\n${failed} foto(s) no se pudieron subir. Podés agregarlas a mano desde Entregas.` : '')
+        );
       }catch(e){
         alert('No se pudo leer el archivo. Asegurate de que sea un Excel (.xlsx) o CSV válido.');
       }
