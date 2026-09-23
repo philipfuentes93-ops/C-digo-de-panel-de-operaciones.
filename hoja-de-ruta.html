@@ -1397,6 +1397,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       row.lat = lat;
       row.lng = lng;
       updateMap();
+      // Solo se guarda si el despacho sigue en la lista actual y esta pestaña no tiene
+      // una versión más nueva de la hoja esperando: si no, se pisaría esa versión
+      // (por ejemplo, una importación hecha desde otra pestaña) con una lista vieja.
+      if(!state.rows.includes(row) || pendingRemote) return;
       cacheLocal();
       commit();
     });
@@ -1415,6 +1419,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       state.startLat = lat;
       state.startLng = lng;
       updateMap();
+      if(pendingRemote) return; // hay una versión más nueva esperando: no pisarla
       cacheLocal();
       commit();
     });
