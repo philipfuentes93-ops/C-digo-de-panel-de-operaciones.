@@ -46,32 +46,38 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 </script>
 <style>
   :root{
-    --sidebar:#161532;
-    --sidebar-2:#1f1e42;
-    --sidebar-text:#a9a7c9;
+    --sidebar:#0f4c5c;
+    --sidebar-2:rgba(255,255,255,0.16);
+    --sidebar-text:#b5dcd8;
     --sidebar-text-active:#ffffff;
-    --accent:#5b4fe6;
-    --accent-dark:#4a3fce;
-    --border:#e4e5f1;
-    --bg:#f3f4fa;
+    --accent:#0e8f8a;
+    --accent-dark:#0e6b73;
+    --teal:#14b8a6;
+    --blue:#3b82f6;
+    --coral:#ff7f6b;
+    --border:#d8ebe9;
+    --bg:#eef8f6;
     --panel:#ffffff;
-    --text:#211f3d;
-    --muted:#71708f;
-    --ok:#1f9d55;
-    --ok-bg:#e3f7ea;
-    --warn:#b8860b;
-    --warn-bg:#fbf1d8;
-    --pend:#71708f;
-    --pend-bg:#eceef4;
-    --bad:#d33f3f;
-    --bad-bg:#fde8e8;
+    --text:#12302f;
+    --muted:#5b7473;
+    --ok:#0e7c72;
+    --ok-bg:#d5f5f0;
+    --warn:#2458c9;
+    --warn-bg:#dde9ff;
+    --pend:#5b7473;
+    --pend-bg:#e8efef;
+    --bad:#c2452f;
+    --bad-bg:#ffe5de;
+    --excel:#137a3a;
+    --excel-bg:#ecfbf1;
+    --excel-border:#b4e8c6;
   }
   *{box-sizing:border-box;}
   html,body{ height:100%; }
   body{
     margin:0;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:linear-gradient(165deg, #eef1fc 0%, #f5f2fb 45%, #fdf0f6 100%);
+    background:linear-gradient(165deg, #ecf9f7 0%, #f5fbfc 50%, #fff3ef 100%);
     background-attachment:fixed;
     color:var(--text);
   }
@@ -80,7 +86,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .login-screen{
     position:fixed;
     inset:0;
-    background:linear-gradient(160deg,#161532,#2a2760);
+    background:linear-gradient(160deg,#0f4c5c,#0e7c72);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -124,7 +130,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .sidebar{
     width:72px;
     flex:none;
-    background:var(--sidebar);
+    background:linear-gradient(180deg,#0f4c5c 0%,#0e6b73 100%);
     color:var(--sidebar-text);
     display:flex;
     flex-direction:column;
@@ -141,7 +147,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .sidebar-logo .badge{
     width:38px; height:38px;
     border-radius:11px;
-    background:linear-gradient(135deg,var(--accent),#8b7dff);
+    background:linear-gradient(135deg,var(--coral),#ffb199);
     display:flex; align-items:center; justify-content:center;
     font-size:18px;
     flex:none;
@@ -165,7 +171,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .nav-item.active{
     background:var(--sidebar-2);
     color:var(--sidebar-text-active);
-    box-shadow:inset 3px 0 0 var(--accent);
+    box-shadow:inset 3px 0 0 var(--coral);
   }
   .nav-group{ position:relative; width:100%; display:flex; justify-content:center; }
   .nav-flyout{
@@ -174,7 +180,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     top:0;
     background:#fff;
     border-radius:10px;
-    box-shadow:0 10px 28px rgba(20,20,50,0.25);
+    box-shadow:0 10px 28px rgba(15,76,92,0.25);
     padding:8px;
     min-width:190px;
     z-index:30;
@@ -231,7 +237,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .link-btn{
     background:none;
     border:none;
-    color:#9c99d8;
+    color:#a7d8d4;
     font-size:16px;
     font-weight:700;
     padding:4px;
@@ -281,7 +287,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .content-header h1{
     margin:0 0 4px;
     font-size:24px;
-    color:var(--text);
+    color:var(--accent-dark);
   }
   .content-header p{
     margin:0;
@@ -309,7 +315,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   }
   .progress-fill{
     height:100%;
-    background:linear-gradient(90deg,var(--accent),#8b7dff);
+    background:linear-gradient(90deg,var(--teal),var(--blue));
     border-radius:6px;
     transition:width .3s ease;
   }
@@ -334,7 +340,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     background:var(--panel);
     border-radius:14px;
     border:1px solid var(--border);
-    box-shadow:0 2px 10px rgba(30,30,70,0.04);
+    box-shadow:0 2px 10px rgba(15,76,92,0.04);
   }
 
   .summary-card{
@@ -418,11 +424,13 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     gap:6px;
     transition:background .15s, transform .05s;
   }
-  button:hover{ background:#f1f1fb; }
+  button:hover{ background:var(--bg); }
   button:active{ transform:translateY(1px); }
-  button.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.primary{ background:linear-gradient(135deg,var(--accent),var(--accent-dark)); border-color:transparent; color:#fff; box-shadow:0 4px 12px rgba(14,143,138,0.28); }
   button.primary:hover{ background:var(--accent-dark); }
-  button.danger{ color:var(--bad); }
+  button.excel{ background:var(--excel-bg); border-color:var(--excel-border); color:var(--excel); }
+  button.excel:hover{ background:#d9f5e3; }
+  button.danger{ background:#fff3ef; border-color:#fbd0c5; color:var(--bad); }
   button.danger:hover{ background:var(--bad-bg); }
   .spacer{ flex:1; }
 
@@ -431,10 +439,11 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     border-radius:14px;
     overflow:hidden;
     margin-bottom:18px;
+    background:var(--panel);
     border:1px solid var(--border);
-    box-shadow:0 2px 10px rgba(30,30,70,0.04);
+    box-shadow:0 2px 10px rgba(15,76,92,0.04);
   }
-  #mapView{ height:480px; background:#e9eaf3; }
+  #mapView{ height:480px; background:#e3f1ef; }
   .map-overlay{
     position:absolute;
     top:14px;
@@ -442,7 +451,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     z-index:10;
     background:#fff;
     border-radius:12px;
-    box-shadow:0 10px 28px rgba(20,20,50,0.2);
+    box-shadow:0 10px 28px rgba(15,76,92,0.2);
     padding:12px 14px;
     max-width:260px;
   }
@@ -493,8 +502,13 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-size:13.5px;
     vertical-align:top;
   }
-  tbody tr:nth-child(even){ background:#fafafe; }
-  tbody tr:hover{ background:#f1f0fc; }
+  tbody tr:nth-child(even){ background:#f6fcfb; }
+  tbody tr:hover{ background:#e9f6f4; }
+  /* Franja de color a la izquierda de cada fila según su estado */
+  tbody tr:has(select.estado) td:first-child{ box-shadow:inset 4px 0 0 #b6c7c6; }
+  tbody tr:has(select.estado.en-ruta) td:first-child{ box-shadow:inset 4px 0 0 var(--blue); }
+  tbody tr:has(select.estado.entregado) td:first-child{ box-shadow:inset 4px 0 0 var(--teal); }
+  tbody tr:has(select.estado.no-entregado) td:first-child{ box-shadow:inset 4px 0 0 var(--coral); }
   td[contenteditable]{
     outline:none;
     min-width:90px;
@@ -521,7 +535,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-size:15px;
     border-radius:6px;
   }
-  .icon-btn:hover{ background:#e6e6f7; color:var(--bad); }
+  .icon-btn:hover{ background:var(--bad-bg); color:var(--bad); }
   select.estado{
     border:none;
     border-radius:20px;
@@ -571,7 +585,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     padding:14px 12px;
     font-weight:700;
     border-top:2px solid var(--sidebar);
-    background:#f7f7fc;
+    background:#f0f8f7;
   }
   .footer-note{
     font-size:12px;
@@ -603,6 +617,13 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     font-weight:800;
     color:var(--text);
   }
+  .stat-grid .stat-tile{ border:none; color:#fff; box-shadow:0 6px 16px rgba(15,76,92,0.14); }
+  .stat-grid .stat-tile:nth-child(4n+1){ background:linear-gradient(135deg,#14b8a6,#0e7c72); }
+  .stat-grid .stat-tile:nth-child(4n+2){ background:linear-gradient(135deg,#3b82f6,#2458c9); }
+  .stat-grid .stat-tile:nth-child(4n+3){ background:linear-gradient(135deg,#ff7f6b,#e2553f); }
+  .stat-grid .stat-tile:nth-child(4n+4){ background:linear-gradient(135deg,#0f4c5c,#0e6b73); }
+  .stat-grid .stat-label{ color:rgba(255,255,255,0.88); }
+  .stat-grid .stat-value{ color:#fff; }
   .chart-card{ padding:18px 22px; margin-bottom:16px; }
   .chart-card h2{ margin:0 0 4px; font-size:14px; color:var(--text); }
   .chart-note{ margin:0 0 10px; font-size:12px; color:var(--muted); }
@@ -672,7 +693,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     text-align:left;
     transition:background .15s ease, box-shadow .15s ease;
   }
-  .chofer-compact-row:hover{ background:var(--bg); box-shadow:0 2px 8px rgba(30,30,70,0.06); }
+  .chofer-compact-row:hover{ background:var(--bg); box-shadow:0 2px 8px rgba(15,76,92,0.06); }
   .chofer-compact-row.entregado{ border-left-color:var(--ok); }
   .chofer-compact-row.no-entregado{ border-left-color:var(--bad); }
   .chofer-compact-row .chofer-num{ width:24px; height:24px; font-size:11.5px; }
@@ -702,11 +723,11 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     padding:16px 18px 18px;
     margin-bottom:14px;
     border-left:5px solid var(--pend);
-    box-shadow:0 3px 14px rgba(30,30,70,0.06);
+    box-shadow:0 3px 14px rgba(15,76,92,0.06);
     transition:box-shadow .15s ease, transform .15s ease;
   }
   .chofer-card:hover{
-    box-shadow:0 8px 22px rgba(30,30,70,0.1);
+    box-shadow:0 8px 22px rgba(15,76,92,0.1);
     transform:translateY(-1px);
   }
   .chofer-card.pendiente{ border-left-color:var(--pend); }
@@ -816,7 +837,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .signature-wrap{
     border:1px dashed var(--border);
     border-radius:10px;
-    background:#fafafe;
+    background:#f6fcfb;
     touch-action:none;
     max-width:420px;
   }
@@ -1001,10 +1022,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
         </div>
         <div class="map-overlay-body" id="mapOverlayBody">
           <div class="map-legend">
-            <span class="swatch"><span class="dot" style="background:#71708f"></span> Pendiente</span>
-            <span class="swatch"><span class="dot" style="background:#b8860b"></span> En ruta</span>
-            <span class="swatch"><span class="dot" style="background:#1f9d55"></span> Entregado</span>
-            <span class="swatch"><span class="dot" style="background:#d33f3f"></span> No entregado</span>
+            <span class="swatch"><span class="dot" style="background:#94a8a7"></span> Pendiente</span>
+            <span class="swatch"><span class="dot" style="background:#3b82f6"></span> En ruta</span>
+            <span class="swatch"><span class="dot" style="background:#14b8a6"></span> Entregado</span>
+            <span class="swatch"><span class="dot" style="background:#ff7f6b"></span> No entregado</span>
           </div>
         </div>
       </div>
@@ -1012,8 +1033,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
     <div class="toolbar">
       <button class="primary" id="btnAddRow">➕ Agregar despacho</button>
-      <button class="primary" id="btnImportExcel">📊 Importar Excel</button>
-      <button id="btnExportExcel">📤 Exportar Excel</button>
+      <button class="excel" id="btnImportExcel">📊 Importar Excel</button>
+      <button class="excel" id="btnExportExcel">📤 Exportar Excel</button>
       <button id="btnPrint">🖨️ Imprimir / PDF</button>
       <span class="spacer"></span>
       <button class="danger" id="btnClear">🗑️ Vaciar todo</button>
@@ -1189,7 +1210,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     { value: 'entregado', label: 'Entregado', cls: 'entregado' },
     { value: 'no-entregado', label: 'No entregado', cls: 'no-entregado' }
   ];
-  const ESTADO_COLORS = { pendiente:'#71708f', 'en-ruta':'#b8860b', entregado:'#1f9d55', 'no-entregado':'#d33f3f' };
+  const ESTADO_COLORS = { pendiente:'#94a8a7', 'en-ruta':'#3b82f6', entregado:'#14b8a6', 'no-entregado':'#ff7f6b' };
 
   function escapeHtml(s){
     return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -1638,7 +1659,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   /* ============================================================
      REPORTES (gráficos de barras en SVG, sin librerías)
      ============================================================ */
-  const ACCENT_HEX = '#5b4fe6';
+  const ACCENT_HEX = '#0e8f8a';
   let currentView = 'despachos';
   let resueltosOpen = false;
   let expandedResueltoIds = new Set();
@@ -1730,7 +1751,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       label.setAttribute('y', y + rowH / 2 + 4);
       label.setAttribute('text-anchor', 'end');
       label.setAttribute('font-size', '12');
-      label.setAttribute('fill', '#71708f');
+      label.setAttribute('fill', '#5b7473');
       label.textContent = item.label.length > 18 ? item.label.slice(0, 17) + '…' : item.label;
       const labelTitle = document.createElementNS(ns, 'title');
       labelTitle.textContent = item.label;
@@ -1743,7 +1764,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       track.setAttribute('width', barMaxW);
       track.setAttribute('height', barH);
       track.setAttribute('rx', barH / 2);
-      track.setAttribute('fill', '#eef0f7');
+      track.setAttribute('fill', '#e3f1ef');
       svg.appendChild(track);
 
       const bar = document.createElementNS(ns, 'rect');
@@ -1763,7 +1784,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       valueLabel.setAttribute('y', y + rowH / 2 + 4);
       valueLabel.setAttribute('font-size', '12');
       valueLabel.setAttribute('font-weight', '700');
-      valueLabel.setAttribute('fill', '#211f3d');
+      valueLabel.setAttribute('fill', '#12302f');
       valueLabel.textContent = formatted;
       svg.appendChild(valueLabel);
     });
