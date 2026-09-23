@@ -2558,7 +2558,8 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     contacto: ['contacto', 'telefono', 'fono', 'celular', 'whatsapp'],
     productos: ['productos', 'producto', 'detalle', 'items', 'articulo', 'descripcion'],
     tarifa: ['tarifa', 'precio', 'valor', 'monto', 'costo flete', 'flete', 'costo'],
-    estado: ['estado']
+    estado: ['estado'],
+    horaEntrega: ['hora entrega', 'hora de entrega', 'hora']
   };
 
   function normalizeHeaderText(text){
@@ -2589,6 +2590,16 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     return 'pendiente';
   }
 
+  // Excel guarda las horas como fracción del día (0,66 = 15:50); también acepta texto "15:55:00".
+  function horaFromExcel(value){
+    if(typeof value === 'number' && isFinite(value)){
+      const mins = Math.round((value % 1) * 24 * 60) % (24 * 60);
+      return String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0');
+    }
+    const m = /(\d{1,2})[:.](\d{2})/.exec(String(value || ''));
+    return m ? m[1].padStart(2, '0') + ':' + m[2] : '';
+  }
+
   function rowFromExcelRecord(record){
     const row = defaultRow();
     Object.keys(record).forEach(header => {
@@ -2597,6 +2608,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       const raw = record[header];
       if(field === 'tarifa') row.tarifa = parseTarifaValue(raw);
       else if(field === 'estado') row.estado = estadoFromText(raw);
+      else if(field === 'horaEntrega'){
+        const hora = horaFromExcel(raw);
+        if(hora) row.entrega = Object.assign({}, row.entrega || {}, { horaEntrega: hora });
+      }
       else row[field] = String(raw ?? '').trim();
     });
     return row;
@@ -2613,6 +2628,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
   function extractExcelImagesByRow(data){
     const byRow = new Map();
+    byRow.info = { media: 0, formatos: [] };
     let zip;
     try{ zip = XLSX.CFB.read(data, { type:'array' }); }catch(e){ return byRow; }
     const files = {};
@@ -2620,6 +2636,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       const entry = zip.FileIndex[i];
       if(entry && entry.content && entry.content.length) files[p.replace(/^Root Entry\//, '').toLowerCase()] = entry.content;
     });
+    byRow.info.media = Object.keys(files).filter(f => /^xl\/media\//.test(f)).length;
     const text = path => files[path] ? new TextDecoder().decode(files[path]) : null;
     const xml = path => { const t = text(path); return t ? new DOMParser().parseFromString(t, 'application/xml') : null; };
     const byName = (node, name) => node ? Array.from(node.getElementsByTagName('*')).filter(n => n.localName === name) : [];
@@ -2644,7 +2661,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     const addImage = (row, mediaPath) => {
       const bytes = files[mediaPath];
       const mime = IMG_MIME[(mediaPath.split('.').pop() || '').toLowerCase()];
-      if(!bytes || !mime || row < 0) return; // EMF/WMF/TIFF no se pueden mostrar en el navegador
+      if(!bytes || !mime || row < 0){ // EMF/WMF/TIFF no se pueden mostrar en el navegador
+        byRow.info.formatos.push('omitida:' + mediaPath.split('/').pop());
+        return;
+      }
       if(!byRow.has(row)) byRow.set(row, []);
       byRow.get(row).push(new Blob([bytes], { type: mime }));
     };
@@ -2660,6 +2680,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     const sheetRels = rels(sheetPath);
 
     // 1) Fotos flotantes ancladas a una celda.
+    if(byName(sheetDoc, 'drawing').length) byRow.info.formatos.push('flotantes');
     byName(sheetDoc, 'drawing').forEach(d => {
       const drawingPath = sheetRels[relAttr(d, 'id')];
       if(!drawingPath) return;
@@ -2680,6 +2701,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
     // 2) Fotos dentro de la celda (Excel 365): celda con vm="n".
     const vmCells = cells.filter(c => c.getAttribute('vm'));
     if(vmCells.length){
+      byRow.info.formatos.push('en-celda:' + vmCells.length);
       const meta = xml('xl/metadata.xml');
       const future = byName(meta, 'futureMetadata').find(f => f.getAttribute('name') === 'XLRICHVALUE');
       const futureBks = future ? byName(future, 'bk').map(bk => { const rvb = firstByName(bk, 'rvb'); return rvb ? Number(rvb.getAttribute('i')) : null; }) : [];
@@ -2713,6 +2735,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       return m ? { row: rowOfRef(c.getAttribute('r')), id: m[1] } : null;
     }).filter(Boolean);
     if(dispCells.length){
+      byRow.info.formatos.push('wps:' + dispCells.length);
       const ciPath = 'xl/cellimages.xml';
       const ciRels = rels(ciPath);
       const mediaById = {};
@@ -2766,10 +2789,10 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       return;
     }
     const reader = new FileReader();
-    const isXlsx = /\.xlsx$/i.test(file.name);
     reader.onload = async () => {
       try{
         const data = new Uint8Array(reader.result);
+        const isXlsx = data[0] === 0x50 && data[1] === 0x4B; // "PK": .xlsx/.xlsm son un ZIP
         const wb = XLSX.read(data, { type: 'array' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         const records = XLSX.utils.sheet_to_json(sheet, { defval: '' });
@@ -2805,7 +2828,11 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
         renderRows();
 
         if(!pendingPhotos.length){
-          alert(`Se importaron ${imported.length} despacho(s) correctamente.`);
+          const info = imagesByRow.info;
+          let nota = '';
+          if(!isXlsx) nota = '\n\nEste archivo no es .xlsx, así que no puede traer fotos. Guardalo como "Libro de Excel (.xlsx)" para importar las fotos de respaldo.';
+          else if(info && info.media) nota = `\n\nEl archivo trae ${info.media} imagen(es), pero no se pudo ubicar a qué fila corresponde cada una, así que no se importaron. (Detalle: ${info.formatos.join(', ') || 'sin anclaje'})`;
+          alert(`Se importaron ${imported.length} despacho(s) correctamente.` + nota);
           return;
         }
         if(!firebaseReady){
