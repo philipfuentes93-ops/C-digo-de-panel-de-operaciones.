@@ -646,6 +646,33 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   .stat-grid .stat-tile:nth-child(4n+4){ background:linear-gradient(135deg,#0f4c5c,#0e6b73); }
   .stat-grid .stat-label{ color:rgba(255,255,255,0.88); }
   .stat-grid .stat-value{ color:#fff; }
+  .stat-note{ font-size:12px; font-weight:700; opacity:.92; min-height:16px; }
+
+  /* ---------- Visto bueno del transportista (Liquidaciones) ---------- */
+  .vb-email{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:var(--muted); flex-wrap:wrap; }
+  .vb-email input{ border:1px solid var(--border); border-radius:8px; padding:8px 10px; font:inherit; font-weight:600; font-size:13px; color:var(--text); min-width:0; width:230px; max-width:100%; background:#fff; }
+  .vb-email input:focus{ outline:none; border-color:var(--accent); }
+  thead th.col-vb{ background:#0e7c72; }
+  td.col-vb{ min-width:230px; background:rgba(20,184,166,0.05); }
+  tbody tr.vb-observado{ background:#fffaf0; }
+  .vb-box{ display:flex; flex-direction:column; gap:6px; }
+  .vb-btns{ display:flex; gap:6px; flex-wrap:wrap; }
+  .vb-btns button{ font-size:12px; padding:6px 10px; }
+  button.vb-ok{ background:var(--ok-bg); border-color:#a8e6dc; color:var(--ok); }
+  button.vb-ok:hover{ background:#bff0e7; }
+  button.vb-obs{ background:#fff1d6; border-color:#f6d596; color:#9a5b00; }
+  button.vb-obs:hover{ background:#ffe6b3; }
+  button.vb-link{ border:none; background:none; padding:0; color:var(--muted); font-size:11.5px; text-decoration:underline; align-self:flex-start; }
+  button.vb-link:hover{ background:none; color:var(--text); }
+  .vb-stamp{ font-size:12px; line-height:1.45; color:var(--muted); }
+  .vb-stamp b{ display:block; font-size:12.5px; }
+  .vb-stamp.conforme b{ color:var(--ok); }
+  .vb-stamp.observado b{ color:#9a5b00; }
+  .vb-stamp .vb-comment{ display:block; margin-top:3px; padding:5px 8px; border-left:3px solid #f5b83d; background:#fff; border-radius:0 6px 6px 0; color:var(--text); white-space:pre-wrap; }
+  .vb-waiting{ font-size:12px; color:var(--muted); font-style:italic; }
+  .vb-box textarea{ width:100%; min-height:54px; font:inherit; font-size:12.5px; border:1px solid #f6d596; border-radius:8px; padding:6px 8px; resize:vertical; }
+  .vb-box textarea:focus{ outline:none; border-color:#f5b83d; }
+
   .chart-card{ padding:18px 22px; margin-bottom:16px; }
   .chart-card h2{ margin:0 0 4px; font-size:14px; color:var(--text); }
   .chart-note{ margin:0 0 10px; font-size:12px; color:var(--muted); }
@@ -1178,11 +1205,20 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
         <span class="stat-label">Pendiente de pago</span>
         <span class="stat-value" id="liqPendiente">$0</span>
       </div>
+      <div class="card stat-tile">
+        <span class="stat-label">Visto bueno transportista</span>
+        <span class="stat-value" id="liqVistoBueno">0 de 0</span>
+        <span class="stat-note" id="liqVistoBuenoNota"></span>
+      </div>
     </section>
 
     <div class="toolbar">
       <button class="primary" id="btnImprimirLiq">🖨️ Imprimir liquidación (PDF)</button>
       <span class="spacer"></span>
+      <label class="vb-email" for="liqTransportistaEmail">
+        <span>Correo del transportista</span>
+        <input type="email" id="liqTransportistaEmail" placeholder="correo@transportista.cl" autocomplete="off">
+      </label>
     </div>
 
     <section class="card table-card">
@@ -1198,6 +1234,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
               <th>N° Factura</th>
               <th>Factura adjunta</th>
               <th>Pagado</th>
+              <th class="col-vb">Visto bueno transportista</th>
             </tr>
           </thead>
           <tbody id="tbodyLiq"></tbody>
@@ -1207,6 +1244,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
 
     <p class="footer-note">
       Marcá "Pagado" cuando le hayas transferido o entregado el dinero al transportista por ese despacho. Anotá el N° de factura y, si querés, adjuntá el archivo (PDF o foto) que te mandó. "Imprimir liquidación" arma un comprobante con todos los despachos listados acá para guardar como PDF. Se guarda junto con el resto de la hoja, así lo ve también si tiene sesión abierta.
+      En <strong>Visto bueno transportista</strong>, el transportista marca cada despacho como <strong>Conforme</strong> u <strong>Observar</strong> (con un comentario). Si anotás su correo arriba, solo él puede marcar. Si la tarifa de un despacho cambia después del visto bueno, vuelve a quedar pendiente.
     </p>
   </div>
   </main>
@@ -1483,11 +1521,136 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
   /* ============================================================
      LIQUIDACIONES — cuadrar pagos pendientes con el transportista
      ============================================================ */
+  /* ---------- Visto bueno del transportista ----------
+     row.vistoBueno = { estado: 'conforme' | 'observado', por, at, tarifa, comentario }
+     Se guarda la tarifa que se aprobó: si después cambia, el visto bueno deja de valer. */
+  const vbEditando = new Set(); // ids de despachos con el cuadro de observación abierto (no se guarda)
+  const vbBorrador = new Map(); // texto a medio escribir, para no perderlo si la tabla se redibuja
+
+  function currentEmail(){
+    return ((auth && auth.currentUser && auth.currentUser.email) || '').trim().toLowerCase();
+  }
+  function puedeDarVistoBueno(){
+    const t = (state.transportistaEmail || '').trim().toLowerCase();
+    return !t || t === currentEmail();
+  }
+  function vistoBuenoDe(row){
+    const vb = row.vistoBueno;
+    if(!vb) return { estado: 'pendiente' };
+    if((Number(vb.tarifa) || 0) !== (Number(row.tarifa) || 0)) return { estado: 'pendiente', cambioTarifa: vb };
+    return vb;
+  }
+  function fechaCorta(iso){
+    const d = new Date(iso);
+    if(isNaN(d)) return '';
+    return d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+  }
+  function marcarVistoBueno(row, estado, comentario){
+    row.vistoBueno = {
+      estado,
+      por: currentEmail() || 'sin sesión',
+      at: new Date().toISOString(),
+      tarifa: Number(row.tarifa) || 0,
+      comentario: comentario || ''
+    };
+    vbEditando.delete(row.id);
+    vbBorrador.delete(row.id);
+    renderLiquidaciones();
+    commit();
+  }
+
+  function celdaVistoBueno(row){
+    const td = document.createElement('td');
+    td.className = 'col-vb';
+    const box = document.createElement('div');
+    box.className = 'vb-box';
+    td.appendChild(box);
+    const puede = puedeDarVistoBueno();
+    const vb = vistoBuenoDe(row);
+
+    if(puede && vbEditando.has(row.id)){
+      const ta = document.createElement('textarea');
+      ta.id = 'vbObs-' + row.id;
+      ta.placeholder = '¿Qué no te cuadra de este despacho?';
+      ta.value = vbBorrador.has(row.id) ? vbBorrador.get(row.id) : ((row.vistoBueno && row.vistoBueno.estado === 'observado' && row.vistoBueno.comentario) || '');
+      ta.addEventListener('input', () => vbBorrador.set(row.id, ta.value));
+      const btns = document.createElement('div');
+      btns.className = 'vb-btns';
+      const enviar = document.createElement('button');
+      enviar.className = 'vb-obs';
+      enviar.textContent = 'Enviar observación';
+      enviar.addEventListener('click', () => {
+        if(!ta.value.trim()){ ta.focus(); return; }
+        marcarVistoBueno(row, 'observado', ta.value.trim());
+      });
+      const cancelar = document.createElement('button');
+      cancelar.textContent = 'Cancelar';
+      cancelar.addEventListener('click', () => { vbEditando.delete(row.id); vbBorrador.delete(row.id); renderLiquidaciones(); });
+      btns.append(enviar, cancelar);
+      box.append(ta, btns);
+      setTimeout(() => ta.focus(), 0);
+      return td;
+    }
+
+    if(vb.estado === 'conforme' || vb.estado === 'observado'){
+      const st = document.createElement('div');
+      st.className = 'vb-stamp ' + vb.estado;
+      const titulo = document.createElement('b');
+      titulo.textContent = vb.estado === 'conforme' ? '✅ Conforme' : '⚠️ Con observación';
+      st.appendChild(titulo);
+      st.appendChild(document.createTextNode((vb.por || '') + ' · ' + fechaCorta(vb.at)));
+      if(vb.comentario){
+        const c = document.createElement('span');
+        c.className = 'vb-comment';
+        c.textContent = '«' + vb.comentario + '»';
+        st.appendChild(c);
+      }
+      box.appendChild(st);
+      if(puede){
+        const cambiar = document.createElement('button');
+        cambiar.className = 'vb-link';
+        cambiar.textContent = 'Cambiar mi respuesta';
+        cambiar.addEventListener('click', () => { delete row.vistoBueno; renderLiquidaciones(); commit(); });
+        box.appendChild(cambiar);
+      }
+      return td;
+    }
+
+    if(vb.cambioTarifa){
+      const aviso = document.createElement('div');
+      aviso.className = 'vb-waiting';
+      aviso.textContent = `La tarifa cambió después del visto bueno (${formatMoney(vb.cambioTarifa.tarifa)} → ${formatMoney(row.tarifa)}). Falta revisarla de nuevo.`;
+      box.appendChild(aviso);
+    }
+    if(puede){
+      const btns = document.createElement('div');
+      btns.className = 'vb-btns';
+      const ok = document.createElement('button');
+      ok.className = 'vb-ok';
+      ok.textContent = '✅ Conforme';
+      ok.addEventListener('click', () => marcarVistoBueno(row, 'conforme'));
+      const obs = document.createElement('button');
+      obs.className = 'vb-obs';
+      obs.textContent = '⚠️ Observar';
+      obs.addEventListener('click', () => { vbEditando.add(row.id); renderLiquidaciones(); });
+      btns.append(ok, obs);
+      box.appendChild(btns);
+    } else if(!vb.cambioTarifa){
+      const w = document.createElement('span');
+      w.className = 'vb-waiting';
+      w.textContent = 'Esperando revisión del transportista';
+      box.appendChild(w);
+    }
+    return td;
+  }
+
   function renderLiquidaciones(){
     const tbodyLiq = $('tbodyLiq');
     tbodyLiq.innerHTML = '';
+    const inputEmail = $('liqTransportistaEmail');
+    if(document.activeElement !== inputEmail) inputEmail.value = state.transportistaEmail || '';
 
-    let total = 0, pagado = 0;
+    let total = 0, pagado = 0, vbConforme = 0, vbObservado = 0, vbTotal = 0;
     state.rows.forEach((row, idx) => {
       const tarifa = Number(row.tarifa) || 0;
       total += tarifa;
@@ -1590,12 +1753,35 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       tdPagado.appendChild(chk);
       tr.appendChild(tdPagado);
 
+      tr.appendChild(celdaVistoBueno(row));
+      if(row.cliente || row.direccion || tarifa){
+        vbTotal++;
+        const vb = vistoBuenoDe(row);
+        if(vb.estado === 'conforme') vbConforme++;
+        if(vb.estado === 'observado'){ vbObservado++; tr.classList.add('vb-observado'); }
+      }
+
       tbodyLiq.appendChild(tr);
     });
 
     $('liqTotal').textContent = formatMoney(total);
     $('liqPagado').textContent = formatMoney(pagado);
     $('liqPendiente').textContent = formatMoney(total - pagado);
+    $('liqVistoBueno').textContent = `${vbConforme} de ${vbTotal}`;
+    $('liqVistoBuenoNota').textContent = vbObservado ? `${vbObservado} con observación` : (vbTotal && vbConforme === vbTotal ? 'Todo conforme' : '');
+  }
+
+  $('liqTransportistaEmail').addEventListener('change', e => {
+    state.transportistaEmail = e.target.value.trim().toLowerCase();
+    renderLiquidaciones();
+    commit();
+  });
+
+  function textoVistoBueno(r){
+    const vb = vistoBuenoDe(r);
+    if(vb.estado === 'conforme') return 'Conforme · ' + escapeHtml(vb.por || '') + ' · ' + fechaCorta(vb.at);
+    if(vb.estado === 'observado') return '<b>Observado</b> · ' + escapeHtml(vb.por || '') + ' · ' + fechaCorta(vb.at) + '<br><i>' + escapeHtml(vb.comentario || '') + '</i>';
+    return vb.cambioTarifa ? 'Pendiente (cambió la tarifa)' : 'Pendiente';
   }
 
   function imprimirLiquidacion(){
@@ -1616,6 +1802,7 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
         '<td>' + escapeHtml(r.numeroFactura || '—') + '</td>' +
         '<td style="text-align:right">' + formatMoney(tarifa) + '</td>' +
         '<td style="text-align:center">' + (r.pagado ? 'Sí' : 'No') + '</td>' +
+        '<td>' + textoVistoBueno(r) + '</td>' +
         '</tr>';
     }).join('');
 
@@ -1643,11 +1830,12 @@ const HOJA_ID = "principal"; // colección "hojasDeRuta", un único documento co
       '<h1>Liquidación de Transportista</h1>' +
       '<div class="meta">' +
         'Hoja de ruta: <b>' + escapeHtml(state.titulo || '') + '</b><br>' +
-        'Transportista: <b>' + escapeHtml(state.transportista || '') + '</b><br>' +
+        'Transportista: <b>' + escapeHtml(state.transportista || '') + '</b>' + (state.transportistaEmail ? ' (' + escapeHtml(state.transportistaEmail) + ')' : '') + '<br>' +
+        'Visto bueno del transportista: <b>' + $('liqVistoBueno').textContent + ' conforme</b>' + ($('liqVistoBuenoNota').textContent && $('liqVistoBuenoNota').textContent !== 'Todo conforme' ? ' · ' + escapeHtml($('liqVistoBuenoNota').textContent) : '') + '<br>' +
         'Punto de partida: ' + escapeHtml(state.puntoPartida || '') + '<br>' +
         'Fecha de emisión: ' + fechaEmision +
       '</div>' +
-      '<table><thead><tr><th>N°</th><th>Cliente</th><th>Dirección</th><th>Estado</th><th>N° Factura</th><th>Tarifa</th><th>Pagado</th></tr></thead>' +
+      '<table><thead><tr><th>N°</th><th>Cliente</th><th>Dirección</th><th>Estado</th><th>N° Factura</th><th>Tarifa</th><th>Pagado</th><th>Visto bueno transportista</th></tr></thead>' +
       '<tbody>' + filas + '</tbody></table>' +
       '<div class="totales">' +
         '<div><span>Total liquidación</span><span>' + formatMoney(total) + '</span></div>' +
